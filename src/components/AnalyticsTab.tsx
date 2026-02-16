@@ -1,5 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { TrendingUp, Users, BarChart3, Star } from "lucide-react";
 import { Medicine } from "@/types/pharmacy";
 
@@ -8,10 +7,10 @@ interface AnalyticsTabProps {
 }
 
 const metrics = [
-  { label: "Total Searches", value: "327", icon: TrendingUp, color: "text-primary", bg: "bg-primary/10" },
-  { label: "Customer Inquiries", value: "54", icon: Users, color: "text-secondary", bg: "bg-secondary/10" },
-  { label: "Conversion Rate", value: "16.5%", icon: BarChart3, color: "text-[hsl(var(--chart-purple))]", bg: "bg-[hsl(var(--chart-purple))]/10" },
-  { label: "Rating", value: "4.8", icon: Star, color: "text-warning", bg: "bg-warning/10" },
+  { label: "Total Searches", value: "327", change: "+20.1% from last month", icon: TrendingUp },
+  { label: "Customer Inquiries", value: "54", change: "+12 since last week", icon: Users },
+  { label: "Conversion Rate", value: "16.5%", change: "+2.3% from last month", icon: BarChart3 },
+  { label: "Rating", value: "4.8", change: "+0.2 from last month", icon: Star },
 ];
 
 const AnalyticsTab = ({ medicines }: AnalyticsTabProps) => {
@@ -20,40 +19,38 @@ const AnalyticsTab = ({ medicines }: AnalyticsTabProps) => {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {metrics.map((m, i) => (
-          <Card key={m.label} className="shadow-md animate-count-up" style={{ animationDelay: `${i * 100}ms` }}>
-            <CardContent className="flex items-center gap-4 p-5">
-              <div className={`rounded-xl p-3 ${m.bg}`}>
-                <m.icon className={`h-6 w-6 ${m.color}`} />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{m.label === "Rating" ? `⭐ ${m.value}` : m.value}</p>
-                <p className="text-xs text-muted-foreground">{m.label}</p>
-              </div>
+        {metrics.map((m) => (
+          <Card key={m.label}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">{m.label}</CardTitle>
+              <m.icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">{m.label === "Rating" ? `⭐ ${m.value}` : m.value}</div>
+              <p className="text-xs text-muted-foreground mt-1">{m.change}</p>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <Card className="shadow-md">
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            🔥 Most Searched Medicines
-          </CardTitle>
+          <CardTitle className="text-base font-semibold">Most Searched Medicines</CardTitle>
+          <CardDescription>Top performing medicines by search volume</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {topMedicines.map((m, i) => (
-              <div key={m.id} className="flex items-center gap-4 rounded-lg p-3 transition-colors hover:bg-accent">
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                  #{i + 1}
+              <div key={m.id} className="flex items-center gap-4">
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-semibold text-foreground">
+                  {i + 1}
                 </span>
-                <div className="flex-1">
-                  <p className="font-semibold text-foreground">{m.name}</p>
-                  {m.genericName && <p className="text-xs text-muted-foreground">{m.genericName}</p>}
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{m.name}</p>
+                  {m.genericName && <p className="text-xs text-muted-foreground truncate">{m.genericName}</p>}
                 </div>
-                <Badge variant="secondary">{m.searches} searches</Badge>
-                <span className="font-semibold text-foreground">${m.price.toFixed(2)}</span>
+                <span className="text-sm text-muted-foreground">{m.searches} searches</span>
+                <span className="text-sm font-medium text-foreground">${m.price.toFixed(2)}</span>
               </div>
             ))}
           </div>

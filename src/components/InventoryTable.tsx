@@ -3,8 +3,9 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Search, Trash2, ArrowUpDown, Package } from "lucide-react";
+import { Search, Trash2, ArrowUpDown } from "lucide-react";
 import { Medicine } from "@/types/pharmacy";
 import { formatDistanceToNow } from "date-fns";
 
@@ -63,96 +64,95 @@ const InventoryTable = ({ medicines, onUpdate, onDelete }: InventoryTableProps) 
   );
 
   return (
-    <div className="rounded-xl border bg-card shadow-md">
-      <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
-          <Package className="h-5 w-5 text-primary" />
-          <h3 className="font-bold text-foreground">Your Inventory</h3>
-          <Badge variant="secondary">{medicines.length} medicines</Badge>
+    <Card>
+      <CardHeader className="pb-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <CardTitle className="text-base font-semibold">Your Inventory</CardTitle>
+            <Badge variant="secondary" className="font-normal">{medicines.length} medicines</Badge>
+          </div>
+          <div className="relative max-w-xs w-full sm:w-auto">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder="Search medicines..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-9" />
+          </div>
         </div>
-        <div className="relative max-w-xs w-full sm:w-auto">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search medicines..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
-        </div>
-      </div>
-
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead><SortHeader label="Medicine" sortKeyName="name" /></TableHead>
-              <TableHead><SortHeader label="Price" sortKeyName="price" /></TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead className="hidden md:table-cell"><SortHeader label="Searches" sortKeyName="searches" /></TableHead>
-              <TableHead className="hidden lg:table-cell"><SortHeader label="Updated" sortKeyName="updatedAt" /></TableHead>
-              <TableHead className="w-12"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.length === 0 ? (
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                  {search ? "No medicines match your search" : "No medicines in inventory yet. Add some above!"}
-                </TableCell>
+                <TableHead><SortHeader label="Medicine" sortKeyName="name" /></TableHead>
+                <TableHead><SortHeader label="Price" sortKeyName="price" /></TableHead>
+                <TableHead>Stock</TableHead>
+                <TableHead className="hidden md:table-cell"><SortHeader label="Searches" sortKeyName="searches" /></TableHead>
+                <TableHead className="hidden lg:table-cell"><SortHeader label="Updated" sortKeyName="updatedAt" /></TableHead>
+                <TableHead className="w-12"></TableHead>
               </TableRow>
-            ) : (
-              filtered.map((m) => (
-                <TableRow key={m.id} className="hover:bg-accent/50 transition-colors">
-                  <TableCell>
-                    <div>
-                      <p className="font-semibold text-foreground">{m.name}</p>
-                      {m.genericName && <p className="text-xs text-muted-foreground">{m.genericName}</p>}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {editingPrice === m.id ? (
-                      <Input
-                        type="number"
-                        className="h-8 w-20"
-                        value={priceValue}
-                        onChange={(e) => setPriceValue(e.target.value)}
-                        onBlur={() => savePrice(m.id)}
-                        onKeyDown={(e) => e.key === "Enter" && savePrice(m.id)}
-                        autoFocus
-                      />
-                    ) : (
-                      <button
-                        className="rounded px-2 py-1 font-semibold text-foreground hover:bg-muted transition-colors"
-                        onClick={() => { setEditingPrice(m.id); setPriceValue(m.price.toFixed(2)); }}
-                      >
-                        ${m.price.toFixed(2)}
-                      </button>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <button
-                      onClick={() => onUpdate(m.id, { inStock: !m.inStock })}
-                      className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
-                        m.inStock
-                          ? "bg-primary/15 text-primary hover:bg-primary/25"
-                          : "bg-destructive/15 text-destructive hover:bg-destructive/25"
-                      }`}
-                    >
-                      {m.inStock ? "✅ In Stock" : "❌ Out"}
-                    </button>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    <span className="text-sm text-muted-foreground">{m.searches}</span>
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    <span className="text-xs text-muted-foreground">{formatDistanceToNow(m.updatedAt, { addSuffix: true })}</span>
-                  </TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive/60 hover:text-destructive hover:bg-destructive/10" onClick={() => setDeleteId(m.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+            </TableHeader>
+            <TableBody>
+              {filtered.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                    {search ? "No medicines match your search" : "No medicines in inventory yet. Add some above!"}
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ) : (
+                filtered.map((m) => (
+                  <TableRow key={m.id}>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium text-foreground">{m.name}</p>
+                        {m.genericName && <p className="text-xs text-muted-foreground">{m.genericName}</p>}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {editingPrice === m.id ? (
+                        <Input
+                          type="number"
+                          className="h-8 w-20"
+                          value={priceValue}
+                          onChange={(e) => setPriceValue(e.target.value)}
+                          onBlur={() => savePrice(m.id)}
+                          onKeyDown={(e) => e.key === "Enter" && savePrice(m.id)}
+                          autoFocus
+                        />
+                      ) : (
+                        <button
+                          className="rounded px-1.5 py-0.5 font-medium text-foreground hover:bg-accent transition-colors text-sm"
+                          onClick={() => { setEditingPrice(m.id); setPriceValue(m.price.toFixed(2)); }}
+                        >
+                          ${m.price.toFixed(2)}
+                        </button>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <button
+                        onClick={() => onUpdate(m.id, { inStock: !m.inStock })}
+                      >
+                        <Badge variant={m.inStock ? "default" : "destructive"} className="cursor-pointer">
+                          {m.inStock ? "In Stock" : "Out of Stock"}
+                        </Badge>
+                      </button>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <span className="text-sm text-muted-foreground">{m.searches}</span>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <span className="text-xs text-muted-foreground">{formatDistanceToNow(m.updatedAt, { addSuffix: true })}</span>
+                    </TableCell>
+                    <TableCell>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => setDeleteId(m.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
 
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent>
@@ -166,7 +166,7 @@ const InventoryTable = ({ medicines, onUpdate, onDelete }: InventoryTableProps) 
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
+    </Card>
   );
 };
 

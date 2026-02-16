@@ -1,7 +1,6 @@
 import { useState, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { BarChart3, Download, Upload, CheckCircle2, AlertTriangle } from "lucide-react";
@@ -45,35 +44,32 @@ const BulkUpload = () => {
   };
 
   return (
-    <Card className="border-2 border-secondary/20 shadow-lg">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <BarChart3 className="h-5 w-5 text-secondary" />
-          Bulk Upload Inventory
-          <Badge variant="outline" className="ml-auto text-xs">Method 2</Badge>
-        </CardTitle>
+    <Card>
+      <CardHeader className="pb-4">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-base font-semibold">Bulk Upload Inventory</CardTitle>
+          <BarChart3 className="h-4 w-4 text-muted-foreground" />
+        </div>
+        <CardDescription>Upload entire inventory via CSV</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">Upload entire inventory via CSV</p>
-
-        <Button variant="outline" className="w-full gap-2 border-secondary/30 text-secondary hover:bg-secondary/10" onClick={handleDownloadTemplate}>
+        <Button variant="outline" className="w-full gap-2" onClick={handleDownloadTemplate}>
           <Download className="h-4 w-4" />
           Download CSV Template
         </Button>
 
         <input ref={fileRef} type="file" accept=".csv" className="hidden" onChange={handleFileChange} />
         <button
-          className="flex w-full flex-col items-center gap-2 rounded-xl border-2 border-dashed border-border p-8 transition-colors hover:border-secondary hover:bg-secondary/5"
+          className="flex w-full flex-col items-center gap-2 rounded-md border-2 border-dashed border-border p-6 transition-colors hover:border-muted-foreground/50 hover:bg-accent"
           onClick={() => fileRef.current?.click()}
         >
-          <Upload className="h-8 w-8 text-muted-foreground" />
+          <Upload className="h-6 w-6 text-muted-foreground" />
           <p className="text-sm font-medium text-foreground">Click to upload CSV file</p>
-          <p className="text-xs text-muted-foreground">or drag and drop here</p>
-          <p className="text-xs text-muted-foreground">CSV format only, max 5MB</p>
+          <p className="text-xs text-muted-foreground">or drag and drop here · CSV only, max 5MB</p>
         </button>
 
         {uploading && (
-          <div className="space-y-2 animate-fade-in">
+          <div className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Uploading...</span>
               <span className="font-medium text-foreground">{progress}%</span>
@@ -83,22 +79,22 @@ const BulkUpload = () => {
         )}
 
         {result && (
-          <div className="space-y-2 animate-fade-in">
-            <Alert className="border-primary/30 bg-accent">
+          <div className="space-y-2">
+            <Alert className="border-primary/30 bg-primary/5">
               <CheckCircle2 className="h-4 w-4 text-primary" />
-              <AlertDescription className="text-accent-foreground">✅ {result.success} medicines added successfully</AlertDescription>
+              <AlertDescription>{result.success} medicines added successfully</AlertDescription>
             </Alert>
             {result.failed > 0 && (
-              <Alert className="border-warning/30 bg-warning/10">
+              <Alert className="border-warning/30 bg-warning/5">
                 <AlertTriangle className="h-4 w-4 text-warning" />
-                <AlertDescription className="text-foreground">⚠️ {result.failed} entries failed — check formatting</AlertDescription>
+                <AlertDescription>{result.failed} entries failed — check formatting</AlertDescription>
               </Alert>
             )}
           </div>
         )}
 
-        <div className="rounded-lg bg-muted p-3">
-          <p className="text-xs font-medium text-foreground mb-1">📝 CSV Format:</p>
+        <div className="rounded-md bg-muted p-3">
+          <p className="text-xs font-medium text-foreground mb-1">CSV Format:</p>
           <ul className="text-xs text-muted-foreground space-y-0.5">
             <li>• Required: name, price, stock</li>
             <li>• Optional: generic_name, quantity</li>
