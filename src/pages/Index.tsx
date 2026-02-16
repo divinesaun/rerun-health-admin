@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AppSidebar } from "@/components/AppSidebar";
+import { AppSidebar, MobileSidebar } from "@/components/AppSidebar";
 import MethodSelector from "@/components/MethodSelector";
 import QuickAddForm from "@/components/QuickAddForm";
 import BulkUpload from "@/components/BulkUpload";
@@ -63,7 +63,8 @@ const Index = () => {
 
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top header bar */}
-        <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
+        <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:h-16 md:px-6">
+          <MobileSidebar activeTab={tab} onTabChange={setTab} onLogout={handleLogout} />
           <div className="flex-1" />
           <div className="relative hidden md:block">
             <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -81,7 +82,7 @@ const Index = () => {
         </header>
 
         {/* Main content */}
-        <main className="flex-1 px-6 py-6">
+        <main className="flex-1 px-4 py-4 md:px-6 md:py-6">
           {/* Page title */}
           <div className="mb-6 flex items-center justify-between">
             <div>
