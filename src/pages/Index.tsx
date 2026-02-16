@@ -1,7 +1,9 @@
 import { useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import DashboardHeader from "@/components/DashboardHeader";
+import { Input } from "@/components/ui/input";
+import { AppSidebar } from "@/components/AppSidebar";
 import MethodSelector from "@/components/MethodSelector";
 import QuickAddForm from "@/components/QuickAddForm";
 import BulkUpload from "@/components/BulkUpload";
@@ -11,11 +13,12 @@ import AlertsTab from "@/components/AlertsTab";
 import { Medicine, TabType } from "@/types/pharmacy";
 import { INITIAL_MEDICINES } from "@/data/mockData";
 import { toast } from "@/hooks/use-toast";
-import { Download } from "lucide-react";
+import { Download, Search, Settings } from "lucide-react";
 
 const Index = () => {
   const [medicines, setMedicines] = useState<Medicine[]>(INITIAL_MEDICINES);
   const [tab, setTab] = useState<TabType>("inventory");
+  const navigate = useNavigate();
 
   const inStockCount = medicines.filter((m) => m.inStock).length;
 
@@ -46,68 +49,105 @@ const Index = () => {
     toast({ title: "Restocked", description: "Medicine has been marked as in stock." });
   }, [handleUpdate]);
 
+  const handleLogout = () => {
+    navigate("/login");
+  };
+
+  // Sub-tabs for the inventory view (matching shadcn-admin's Overview/Analytics/Reports/Notifications)
+  const inventorySubTabs = ["overview", "manage"] as const;
+  const [inventorySubTab, setInventorySubTab] = useState<string>("overview");
+
   return (
-    <div className="min-h-screen bg-background">
-      <DashboardHeader
-        totalMedicines={medicines.length}
-        inStockCount={inStockCount}
-        onSettingsClick={() => setTab("settings")}
-      />
+    <div className="flex min-h-screen w-full bg-background">
+      <AppSidebar activeTab={tab} onTabChange={setTab} onLogout={handleLogout} />
 
-      <main className="mx-auto max-w-7xl px-4 py-6">
-        {/* Page title row like shadcn-admin */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Dashboard</h1>
-            <p className="text-sm text-muted-foreground">HealthPlus Pharmacy · Avondale, Harare 🇿🇼</p>
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top header bar */}
+        <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-6">
+          <div className="flex-1" />
+          <div className="relative hidden md:block">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder="Search..." className="h-9 w-[240px] pl-8 text-sm" readOnly />
+            <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 select-none rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+              ⌘K
+            </kbd>
           </div>
-          <Button variant="default" size="sm" className="gap-1.5">
-            <Download className="h-4 w-4" />
-            Download
+          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setTab("settings")}>
+            <Settings className="h-4 w-4" />
           </Button>
-        </div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+            HP
+          </div>
+        </header>
 
-        {/* Tabs styled like shadcn-admin */}
-        <Tabs value={tab} onValueChange={(v) => setTab(v as TabType)}>
-          <TabsList className="mb-6 h-10 w-auto">
-            <TabsTrigger value="inventory">Inventory</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="alerts">Alerts</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="inventory">
-            <div className="space-y-6">
-              <MethodSelector />
-              <div className="grid gap-6 lg:grid-cols-2">
-                <QuickAddForm onAdd={handleAdd} />
-                <BulkUpload />
-              </div>
-              <InventoryTable medicines={medicines} onUpdate={handleUpdate} onDelete={handleDelete} />
+        {/* Main content */}
+        <main className="flex-1 px-6 py-6">
+          {/* Page title */}
+          <div className="mb-6 flex items-center justify-between">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-foreground">
+                {tab === "inventory" && "Dashboard"}
+                {tab === "analytics" && "Analytics"}
+                {tab === "alerts" && "Alerts"}
+                {tab === "settings" && "Settings"}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                HealthPlus Pharmacy · Avondale, Harare 🇿🇼
+              </p>
             </div>
-          </TabsContent>
+            <Button variant="default" size="sm" className="gap-1.5">
+              <Download className="h-4 w-4" />
+              Download
+            </Button>
+          </div>
 
-          <TabsContent value="analytics">
-            <AnalyticsTab medicines={medicines} />
-          </TabsContent>
+          {/* Tab content */}
+          {tab === "inventory" && (
+            <div>
+              <Tabs value={inventorySubTab} onValueChange={setInventorySubTab} className="mb-6">
+                <TabsList className="h-10 w-auto">
+                  <TabsTrigger value="overview">Overview</TabsTrigger>
+                  <TabsTrigger value="manage">Manage</TabsTrigger>
+                </TabsList>
 
-          <TabsContent value="alerts">
-            <AlertsTab medicines={medicines} onRestock={handleRestock} />
-          </TabsContent>
+                <TabsContent value="overview" className="mt-6">
+                  <div className="space-y-6">
+                    <AnalyticsTab medicines={medicines} />
+                  </div>
+                </TabsContent>
 
-          <TabsContent value="settings">
+                <TabsContent value="manage" className="mt-6">
+                  <div className="space-y-6">
+                    <MethodSelector />
+                    <div className="grid gap-6 lg:grid-cols-2">
+                      <QuickAddForm onAdd={handleAdd} />
+                      <BulkUpload />
+                    </div>
+                    <InventoryTable medicines={medicines} onUpdate={handleUpdate} onDelete={handleDelete} />
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </div>
+          )}
+
+          {tab === "analytics" && <AnalyticsTab medicines={medicines} />}
+
+          {tab === "alerts" && <AlertsTab medicines={medicines} onRestock={handleRestock} />}
+
+          {tab === "settings" && (
             <div className="rounded-lg border bg-card p-8">
               <h2 className="text-lg font-semibold text-foreground mb-1">Settings</h2>
-              <p className="text-sm text-muted-foreground">Settings page coming soon. Manage your pharmacy profile, notification preferences, and account details here.</p>
+              <p className="text-sm text-muted-foreground">
+                Settings page coming soon. Manage your pharmacy profile, notification preferences, and account details here.
+              </p>
             </div>
-          </TabsContent>
-        </Tabs>
-      </main>
+          )}
+        </main>
 
-      <footer className="border-t py-6 text-center text-xs text-muted-foreground">
-        <p>🇿🇼 RERUN Health AI — Connecting Zimbabweans to Medicine</p>
-        <p className="mt-1">HealthPlus Pharmacy · Avondale, Harare</p>
-      </footer>
+        <footer className="border-t px-6 py-4 text-center text-xs text-muted-foreground">
+          <p>🇿🇼 RERUN Health AI — Connecting Zimbabweans to Medicine</p>
+        </footer>
+      </div>
     </div>
   );
 };
