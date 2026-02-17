@@ -18,6 +18,8 @@ import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Loader2, Building2 } from "lucide-react";
 import { adminPharmacyApi } from "@/lib/adminApi";
+import { OpeningHoursPicker } from "@/components/OpeningHoursPicker";
+import { WhatsAppInput } from "@/components/WhatsAppInput";
 
 const pharmacySchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name too long"),
@@ -59,6 +61,8 @@ export function RegisterPharmacyDialog() {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<PharmacyFormData>({
     resolver: zodResolver(pharmacySchema),
@@ -150,18 +154,22 @@ export function RegisterPharmacyDialog() {
                 <Input {...register("phone")} placeholder="+263 4 123 4567" />
               </FieldRow>
               <FieldRow label="WhatsApp" error={errors.whatsapp_number?.message}>
-                <Input {...register("whatsapp_number")} placeholder="+263 77 123 4567" />
+                <WhatsAppInput
+                  value={watch("whatsapp_number") ?? ""}
+                  onChange={(v) => setValue("whatsapp_number", v)}
+                />
               </FieldRow>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <FieldRow label="Email" error={errors.email?.message}>
-                <Input {...register("email")} placeholder="info@pharmacy.co.zw" />
-              </FieldRow>
-              <FieldRow label="Opening Hours" error={errors.opening_hours?.message}>
-                <Input {...register("opening_hours")} placeholder="Mon-Fri 8am-6pm" />
-              </FieldRow>
-            </div>
+            <FieldRow label="Email" error={errors.email?.message}>
+              <Input {...register("email")} placeholder="info@pharmacy.co.zw" />
+            </FieldRow>
+            <FieldRow label="Opening Hours" error={errors.opening_hours?.message}>
+              <OpeningHoursPicker
+                value={watch("opening_hours") ?? ""}
+                onChange={(v) => setValue("opening_hours", v)}
+              />
+            </FieldRow>
           </div>
 
           <Separator />

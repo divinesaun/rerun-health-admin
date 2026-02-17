@@ -40,6 +40,8 @@ import {
   Loader2,
 } from "lucide-react";
 import { adminPharmacyApi, type AdminPharmacy } from "@/lib/adminApi";
+import { OpeningHoursPicker } from "@/components/OpeningHoursPicker";
+import { WhatsAppInput } from "@/components/WhatsAppInput";
 
 const editSchema = z.object({
   name: z.string().trim().min(2, "Name required").max(100),
@@ -72,6 +74,8 @@ export function PharmacyActionsDropdown({ pharmacy }: Props) {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<EditFormData>({
     resolver: zodResolver(editSchema),
@@ -183,17 +187,23 @@ export function PharmacyActionsDropdown({ pharmacy }: Props) {
                 <Input {...register("phone")} />
               </Field>
               <Field label="WhatsApp" error={errors.whatsapp_number?.message}>
-                <Input {...register("whatsapp_number")} />
+                <WhatsAppInput
+                  value={watch("whatsapp_number") ?? ""}
+                  onChange={(v) => setValue("whatsapp_number", v)}
+                />
               </Field>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Email" error={errors.email?.message}>
-                <Input {...register("email")} />
-              </Field>
-              <Field label="Opening Hours" error={errors.opening_hours?.message}>
-                <Input {...register("opening_hours")} />
-              </Field>
-            </div>
+            <Field label="Email" error={errors.email?.message}>
+              <Input {...register("email")} />
+            </Field>
+            <Field label="Opening Hours" error={errors.opening_hours?.message}>
+              <OpeningHoursPicker
+                value={watch("opening_hours") ?? ""}
+                onChange={(v) => setValue("opening_hours", v)}
+              />
+            </Field>
+
+
             <div className="flex justify-end gap-3 pt-2">
               <Button type="button" variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
               <Button type="submit" disabled={editMutation.isPending} className="gap-1.5">
