@@ -524,7 +524,7 @@ function AdminAnalyticsTab() {
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">New Signups</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">New Registrations</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">

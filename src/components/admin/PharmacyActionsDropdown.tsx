@@ -38,6 +38,7 @@ import {
   ShieldCheck,
   ShieldOff,
   Loader2,
+  Mail,
 } from "lucide-react";
 import { adminPharmacyApi, type AdminPharmacy } from "@/lib/adminApi";
 import { OpeningHoursPicker } from "@/components/OpeningHoursPicker";
@@ -135,7 +136,24 @@ export function PharmacyActionsDropdown({ pharmacy }: Props) {
     },
   });
 
-  const isProcessing = verifyMutation.isPending;
+  const resendMutation = useMutation({
+    mutationFn: () => adminPharmacyApi.resendCredentials(pharmacy.id),
+    onSuccess: (data) => {
+      toast({
+        title: "Credentials sent",
+        description: `New one-time password emailed to ${data.user_email || pharmacy.email}.`,
+      });
+    },
+    onError: (err) => {
+      toast({
+        title: "Error",
+        description: err instanceof Error ? err.message : "Failed to resend credentials.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const isProcessing = verifyMutation.isPending || resendMutation.isPending;
 
   return (
     <>
@@ -152,6 +170,14 @@ export function PharmacyActionsDropdown({ pharmacy }: Props) {
           <DropdownMenuItem onClick={() => verifyMutation.mutate()} className="gap-2">
             {pharmacy.verified ? <ShieldOff className="h-3.5 w-3.5" /> : <ShieldCheck className="h-3.5 w-3.5" />}
             {pharmacy.verified ? "Unverify" : "Verify"}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => resendMutation.mutate()}
+            className="gap-2"
+            disabled={resendMutation.isPending}
+          >
+            <Mail className="h-3.5 w-3.5" />
+            Resend Credentials
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => setDeleteOpen(true)} className="gap-2 text-destructive focus:text-destructive">

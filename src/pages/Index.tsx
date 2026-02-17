@@ -25,6 +25,7 @@ import {
   Plus,
   Save,
   KeyRound,
+  Upload,
 } from "lucide-react";
 import { OpeningHoursPicker } from "@/components/OpeningHoursPicker";
 import { WhatsAppInput } from "@/components/WhatsAppInput";
@@ -245,49 +246,51 @@ const Index = () => {
           {/* Tab content */}
           {!loading && tab === "inventory" && (
             <>
-              {medicines.length === 0 ? (
+              {medicines.length === 0 && inventorySubTab !== "manage" ? (
                 <EmptyInventory onManage={() => setInventorySubTab("manage")} />
               ) : (
                 <div>
                   {/* Summary cards */}
-                  <div className="grid gap-4 sm:grid-cols-3 mb-6">
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Medicines</CardTitle>
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold text-foreground">{medicines.length}</div>
-                        <p className="text-xs text-muted-foreground mt-1">in your inventory</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">In Stock</CardTitle>
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold text-foreground">{inStockCount}</div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {medicines.length > 0
-                            ? `${Math.round((inStockCount / medicines.length) * 100)}% available`
-                            : "—"}
-                        </p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="flex flex-row items-center justify-between pb-2">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Out of Stock</CardTitle>
-                        <AlertTriangle className="h-4 w-4 text-destructive" />
-                      </CardHeader>
-                      <CardContent>
-                        <div className="text-2xl font-bold text-foreground">{outOfStockCount}</div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {outOfStockCount > 0 ? "needs attention" : "all stocked"}
-                        </p>
-                      </CardContent>
-                    </Card>
-                  </div>
+                  {medicines.length > 0 && (
+                    <div className="grid gap-4 sm:grid-cols-3 mb-6">
+                      <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                          <CardTitle className="text-sm font-medium text-muted-foreground">Total Medicines</CardTitle>
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-foreground">{medicines.length}</div>
+                          <p className="text-xs text-muted-foreground mt-1">in your inventory</p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                          <CardTitle className="text-sm font-medium text-muted-foreground">In Stock</CardTitle>
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-foreground">{inStockCount}</div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {medicines.length > 0
+                              ? `${Math.round((inStockCount / medicines.length) * 100)}% available`
+                              : "—"}
+                          </p>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                          <CardTitle className="text-sm font-medium text-muted-foreground">Out of Stock</CardTitle>
+                          <AlertTriangle className="h-4 w-4 text-destructive" />
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-foreground">{outOfStockCount}</div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {outOfStockCount > 0 ? "needs attention" : "all stocked"}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  )}
 
                   <Tabs value={inventorySubTab} onValueChange={setInventorySubTab}>
                     <TabsList className="h-10 w-auto">
@@ -296,7 +299,11 @@ const Index = () => {
                     </TabsList>
 
                     <TabsContent value="overview" className="mt-6">
-                      <InventoryTable medicines={medicines} onUpdate={handleUpdate} onDelete={handleDelete} />
+                      {medicines.length === 0 ? (
+                        <EmptyInventory onManage={() => setInventorySubTab("manage")} />
+                      ) : (
+                        <InventoryTable medicines={medicines} onUpdate={handleUpdate} onDelete={handleDelete} />
+                      )}
                     </TabsContent>
 
                     <TabsContent value="manage" className="mt-6">
@@ -340,14 +347,27 @@ function EmptyInventory({ onManage }: { onManage: () => void }) {
         Add your first medicine to start showing up in customer searches.
         You can add one at a time or upload your full inventory via CSV.
       </p>
-      <div className="flex gap-3">
+      <div className="flex flex-wrap gap-3">
         <Button onClick={onManage} className="gap-1.5">
           <Plus className="h-4 w-4" />
           Add Medicine
         </Button>
         <Button variant="outline" onClick={onManage} className="gap-1.5">
-          <Download className="h-4 w-4" />
+          <Upload className="h-4 w-4" />
           Upload CSV
+        </Button>
+        <Button variant="ghost" size="sm" className="gap-1.5" onClick={() => {
+          const csv = "medicine_name,price,in_stock,quantity_available\nParacetamol 500mg,1.50,true,In Stock\nAmoxicillin 250mg,5.00,false,0";
+          const blob = new Blob([csv], { type: "text/csv" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "inventory_template.csv";
+          a.click();
+          URL.revokeObjectURL(url);
+        }}>
+          <Download className="h-4 w-4" />
+          Download Template
         </Button>
       </div>
     </div>
@@ -428,15 +448,17 @@ function SettingsPanel({
     }
     setSavingPass(true);
     try {
-      await authApi.changePassword({
+      const res = await authApi.changePassword({
         current_password: curPass,
         new_password: newPass,
         confirm_new_password: confirmPass,
       });
+      if ((res as any).access_token) {
+        setToken((res as any).access_token);
+      }
       setCurPass("");
       setNewPass("");
       setConfirmPass("");
-      toast({ title: "Password changed", description: "Your password has been updated." });
       toast({ title: "Password changed", description: "Your password has been updated." });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to change password.";

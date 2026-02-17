@@ -22,16 +22,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Loader2, UserPlus } from "lucide-react";
+import { Plus, Loader2, UserPlus, Mail } from "lucide-react";
 import { adminPharmacyUserApi, adminPharmacyApi } from "@/lib/adminApi";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const userSchema = z.object({
   email: z.string().trim().email("Invalid email").max(255),
-  password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .max(128)
-    .regex(/\d/, "Must contain a number"),
   name: z.string().trim().max(100).optional().or(z.literal("")),
   pharmacy_id: z.string().min(1, "Please select a pharmacy"),
   role: z.string().default("staff"),
@@ -59,14 +55,13 @@ export function AddPharmacyUserDialog() {
     formState: { errors },
   } = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
-    defaultValues: { email: "", password: "", name: "", pharmacy_id: "", role: "staff" },
+    defaultValues: { email: "", name: "", pharmacy_id: "", role: "staff" },
   });
 
   const mutation = useMutation({
     mutationFn: (data: UserFormData) =>
       adminPharmacyUserApi.create({
         email: data.email,
-        password: data.password,
         name: data.name || undefined,
         pharmacy_id: data.pharmacy_id,
         role: data.role,
@@ -74,7 +69,7 @@ export function AddPharmacyUserDialog() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "pharmacy-users"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "analytics"] });
-      toast({ title: "User created", description: "Pharmacy user account created." });
+      toast({ title: "User created", description: "Login credentials have been emailed to the user." });
       reset();
       setOpen(false);
     },
@@ -97,7 +92,7 @@ export function AddPharmacyUserDialog() {
             Add Pharmacy User
           </DialogTitle>
           <DialogDescription>
-            Create a new staff account for a pharmacy.
+            Create a new staff account. A one-time password will be generated and emailed.
           </DialogDescription>
         </DialogHeader>
 
@@ -108,10 +103,6 @@ export function AddPharmacyUserDialog() {
 
           <Field label="Email *" error={errors.email?.message}>
             <Input {...register("email")} type="email" placeholder="staff@pharmacy.co.zw" />
-          </Field>
-
-          <Field label="Password *" error={errors.password?.message}>
-            <Input {...register("password")} type="password" placeholder="Min 8 chars with a number" />
           </Field>
 
           <Field label="Pharmacy *" error={errors.pharmacy_id?.message}>
@@ -139,6 +130,13 @@ export function AddPharmacyUserDialog() {
               </SelectContent>
             </Select>
           </Field>
+
+          <Alert className="bg-muted/50">
+            <Mail className="h-4 w-4" />
+            <AlertDescription className="text-xs">
+              A one-time password will be auto-generated and emailed to this user.
+            </AlertDescription>
+          </Alert>
 
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>

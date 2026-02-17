@@ -42,7 +42,9 @@ const ChangePassword = () => {
         new_password: newPassword,
         confirm_new_password: confirmPassword,
       });
-      clearMustChangePassword();
+      if ((data as any).access_token) {
+        setToken((data as any).access_token);
+      }
       clearMustChangePassword();
       toast({ title: "Password updated", description: "Your password has been changed successfully." });
       navigate("/");

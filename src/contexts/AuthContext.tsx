@@ -37,18 +37,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setState((s) => ({ ...s, isLoading: false, isAuthenticated: false, user: null }));
       return;
     }
+    const role = localStorage.getItem("user_role");
     try {
-      const { user } = await authApi.me();
-      setState((s) => ({
-        ...s,
-        user,
-        token,
-        isLoading: false,
-        isAuthenticated: true,
-      }));
+      if (role === "admin") {
+        const { user } = await adminAuthApi.me();
+        setState((s) => ({
+          ...s,
+          user: user as unknown as PharmacyUser,
+          token,
+          isLoading: false,
+          isAuthenticated: true,
+          isAdmin: true,
+        }));
+      } else {
+        const { user } = await authApi.me();
+        setState((s) => ({
+          ...s,
+          user,
+          token,
+          isLoading: false,
+          isAuthenticated: true,
+          isAdmin: false,
+        }));
+      }
     } catch {
       localStorage.removeItem("access_token");
-      setState((s) => ({ ...s, isLoading: false, isAuthenticated: false, user: null, token: null }));
+      localStorage.removeItem("user_role");
+      setState((s) => ({ ...s, isLoading: false, isAuthenticated: false, user: null, token: null, isAdmin: false }));
     }
   }, []);
 

@@ -16,16 +16,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Loader2, Building2 } from "lucide-react";
+import { Plus, Loader2, Building2, Mail } from "lucide-react";
 import { adminPharmacyApi } from "@/lib/adminApi";
 import { OpeningHoursPicker } from "@/components/OpeningHoursPicker";
 import { WhatsAppInput } from "@/components/WhatsAppInput";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const pharmacySchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name too long"),
   address: z.string().trim().min(3, "Address is required").max(255, "Address too long"),
   suburb: z.string().trim().max(100).optional().or(z.literal("")),
-  city: z.string().trim().max(100).optional().or(z.literal("")),
   phone: z
     .string()
     .trim()
@@ -33,7 +33,7 @@ const pharmacySchema = z.object({
     .regex(/^(\+?\d[\d\s-]{6,18})?$/, "Invalid phone number")
     .optional()
     .or(z.literal("")),
-  email: z.string().trim().email("Invalid email").max(255).optional().or(z.literal("")),
+  email: z.string().trim().email("Valid email required — used as login").max(255),
   whatsapp_number: z
     .string()
     .trim()
@@ -42,13 +42,7 @@ const pharmacySchema = z.object({
     .optional()
     .or(z.literal("")),
   opening_hours: z.string().trim().max(100).optional().or(z.literal("")),
-  admin_email: z.string().trim().email("Invalid admin email").max(255, "Email too long"),
-  admin_password: z
-    .string()
-    .min(8, "Password must be at least 8 characters")
-    .max(128)
-    .regex(/\d/, "Password must contain a number"),
-  admin_name: z.string().trim().max(100).optional().or(z.literal("")),
+  contact_name: z.string().trim().min(2, "Contact name is required").max(100),
 });
 
 type PharmacyFormData = z.infer<typeof pharmacySchema>;
@@ -70,14 +64,11 @@ export function RegisterPharmacyDialog() {
       name: "",
       address: "",
       suburb: "",
-      city: "",
       phone: "",
       email: "",
       whatsapp_number: "",
       opening_hours: "",
-      admin_email: "",
-      admin_password: "",
-      admin_name: "",
+      contact_name: "",
     },
   });
 
@@ -87,19 +78,16 @@ export function RegisterPharmacyDialog() {
         name: data.name,
         address: data.address,
         suburb: data.suburb || undefined,
-        city: data.city || undefined,
         phone: data.phone || undefined,
-        email: data.email || undefined,
+        email: data.email,
         whatsapp_number: data.whatsapp_number || undefined,
         opening_hours: data.opening_hours || undefined,
-        admin_email: data.admin_email,
-        admin_password: data.admin_password,
-        admin_name: data.admin_name || undefined,
+        contact_name: data.contact_name,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["admin", "pharmacies"] });
       queryClient.invalidateQueries({ queryKey: ["admin", "analytics"] });
-      toast({ title: "Pharmacy registered", description: "Pharmacy and admin account created successfully." });
+      toast({ title: "Pharmacy registered", description: "Login credentials have been emailed to the pharmacy." });
       reset();
       setOpen(false);
     },
@@ -123,11 +111,26 @@ export function RegisterPharmacyDialog() {
             Register New Pharmacy
           </DialogTitle>
           <DialogDescription>
-            Create a new pharmacy and its initial admin account.
+            Create a pharmacy account. A one-time password will be generated and emailed to the pharmacy.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4 mt-2">
+          {/* Contact Person */}
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Contact Person</p>
+
+            <FieldRow label="Contact Name *" error={errors.contact_name?.message}>
+              <Input {...register("contact_name")} placeholder="John Moyo" />
+            </FieldRow>
+
+            <FieldRow label="Email * (used as login)" error={errors.email?.message}>
+              <Input {...register("email")} type="email" placeholder="manager@pharmacy.co.zw" />
+            </FieldRow>
+          </div>
+
+          <Separator />
+
           {/* Pharmacy Details */}
           <div className="space-y-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pharmacy Details</p>
@@ -140,14 +143,9 @@ export function RegisterPharmacyDialog() {
               <Input {...register("address")} placeholder="123 Main St, Harare" />
             </FieldRow>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <FieldRow label="Suburb" error={errors.suburb?.message}>
-                <Input {...register("suburb")} placeholder="Avondale" />
-              </FieldRow>
-              <FieldRow label="City" error={errors.city?.message}>
-                <Input {...register("city")} placeholder="Harare" />
-              </FieldRow>
-            </div>
+            <FieldRow label="Suburb" error={errors.suburb?.message}>
+              <Input {...register("suburb")} placeholder="Avondale" />
+            </FieldRow>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <FieldRow label="Phone" error={errors.phone?.message}>
@@ -161,9 +159,6 @@ export function RegisterPharmacyDialog() {
               </FieldRow>
             </div>
 
-            <FieldRow label="Email" error={errors.email?.message}>
-              <Input {...register("email")} placeholder="info@pharmacy.co.zw" />
-            </FieldRow>
             <FieldRow label="Opening Hours" error={errors.opening_hours?.message}>
               <OpeningHoursPicker
                 value={watch("opening_hours") ?? ""}
@@ -172,24 +167,13 @@ export function RegisterPharmacyDialog() {
             </FieldRow>
           </div>
 
-          <Separator />
-
-          {/* Admin Account */}
-          <div className="space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Admin Account</p>
-
-            <FieldRow label="Admin Name" error={errors.admin_name?.message}>
-              <Input {...register("admin_name")} placeholder="John Moyo" />
-            </FieldRow>
-
-            <FieldRow label="Admin Email *" error={errors.admin_email?.message}>
-              <Input {...register("admin_email")} type="email" placeholder="admin@pharmacy.co.zw" />
-            </FieldRow>
-
-            <FieldRow label="Admin Password *" error={errors.admin_password?.message}>
-              <Input {...register("admin_password")} type="password" placeholder="Min 8 chars with a number" />
-            </FieldRow>
-          </div>
+          <Alert className="bg-muted/50">
+            <Mail className="h-4 w-4" />
+            <AlertDescription className="text-xs">
+              A one-time password will be auto-generated and emailed to the pharmacy.
+              They will be required to change it on first login.
+            </AlertDescription>
+          </Alert>
 
           <div className="flex justify-end gap-3 pt-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>

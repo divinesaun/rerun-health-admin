@@ -172,6 +172,9 @@ export const inventoryApi = {
 
   searchMedicines: (q: string) =>
     api.get<{ medicines: MedicineRecord[] }>(`/api/pharmacy/medicines/search?q=${encodeURIComponent(q)}`),
+
+  fixCsv: (rawCsv: string) =>
+    api.post<{ corrected_csv: string }>("/api/pharmacy/inventory/fix-csv", { raw_csv: rawCsv }),
 };
 
 // ── Medicines ─────────────────────────────────────────────────────────────
@@ -209,7 +212,7 @@ export const medicineApi = {
 export const analyticsApi = {
   dashboard: () =>
     api.get<{ overview: Record<string, unknown>; trending_medicines: unknown[]; recent_inquiries: unknown[] }>(
-      "/api/pharmacy/analytics/dashboard"
+      "/api/pharmacy/analytics"
     ),
 
   trending: () => api.get<{ trending: unknown[] }>("/api/pharmacy/analytics/trending"),

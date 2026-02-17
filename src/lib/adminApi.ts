@@ -44,14 +44,11 @@ export interface CreatePharmacyPayload {
   name: string;
   address: string;
   suburb?: string;
-  city?: string;
   phone?: string;
-  email?: string;
+  email: string;
   whatsapp_number?: string;
   opening_hours?: string;
-  admin_email: string;
-  admin_password: string;
-  admin_name?: string;
+  contact_name: string;
 }
 
 export const adminPharmacyApi = {
@@ -62,9 +59,11 @@ export const adminPharmacyApi = {
   update: (id: string, payload: Partial<AdminPharmacy>) =>
     api.put<{ pharmacy: AdminPharmacy }>(`/api/admin/pharmacies/${id}`, payload),
   delete: (id: string) => api.delete(`/api/admin/pharmacies/${id}`),
+  resendCredentials: (id: string) =>
+    api.post<{ email_sent: boolean; user_email: string }>(`/api/admin/pharmacies/${id}/resend-credentials`),
 };
 
-// ── Pharmacy User Management (via /api/admin/pharmacy-users) ──────────────
+// ── Pharmacy User Management (via /api/admin/users) ───────────────────────
 
 export interface PharmacyManagedUser {
   id: string;
@@ -80,30 +79,21 @@ export interface PharmacyManagedUser {
 
 export interface CreatePharmacyUserPayload {
   email: string;
-  password: string;
   name?: string;
   pharmacy_id: string;
   role?: string;
 }
 
-export interface ResetPasswordPayload {
-  new_password: string;
-}
-
 export const adminPharmacyUserApi = {
   list: (pharmacyId?: string) => {
     const params = pharmacyId ? `?pharmacy_id=${pharmacyId}` : "";
-    return api.get<{ users: PharmacyManagedUser[] }>(`/api/admin/pharmacy-users${params}`);
+    return api.get<{ users: PharmacyManagedUser[] }>(`/api/admin/users${params}`);
   },
-  get: (id: string) => api.get<{ user: PharmacyManagedUser }>(`/api/admin/pharmacy-users/${id}`),
   create: (payload: CreatePharmacyUserPayload) =>
-    api.post<{ user: PharmacyManagedUser }>("/api/admin/pharmacy-users", payload),
-  update: (id: string, payload: Partial<PharmacyManagedUser>) =>
-    api.put<{ user: PharmacyManagedUser }>(`/api/admin/pharmacy-users/${id}`, payload),
-  resetPassword: (id: string, payload: ResetPasswordPayload) =>
-    api.post<{ message: string }>(`/api/admin/pharmacy-users/${id}/reset-password`, payload),
-  deactivate: (id: string) => api.post(`/api/admin/pharmacy-users/${id}/deactivate`),
-  activate: (id: string) => api.post(`/api/admin/pharmacy-users/${id}/activate`),
+    api.post<{ user: PharmacyManagedUser }>("/api/admin/users", payload),
+  resetPassword: (id: string) =>
+    api.post<{ email_sent: boolean }>(`/api/admin/users/${id}/reset-password`),
+  delete: (id: string) => api.delete(`/api/admin/users/${id}`),
 };
 
 // ── Medicine Database (Full CRUD via /api/medicines) ──────────────────────
@@ -175,9 +165,7 @@ export const adminAnalyticsApi = {
       overview: AdminOverviewStats;
       trending_medicines: TrendingMedicine[];
       recent_inquiries: RecentInquiry[];
-    }>("/api/pharmacy/analytics"),
-  trending: () => api.get<{ trending: TrendingMedicine[] }>("/api/pharmacy/analytics/trending"),
-  inquiries: () => api.get<{ inquiries: RecentInquiry[] }>("/api/pharmacy/inquiries"),
+    }>("/api/admin/analytics"),
 };
 
 // ── System Settings (JWT, Email, Twilio, OCR, OpenRouter) ─────────────────
