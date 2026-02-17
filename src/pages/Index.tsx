@@ -26,6 +26,8 @@ import {
   Save,
   KeyRound,
 } from "lucide-react";
+import { OpeningHoursPicker } from "@/components/OpeningHoursPicker";
+import { WhatsAppInput } from "@/components/WhatsAppInput";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   inventoryApi,
@@ -367,6 +369,7 @@ function SettingsPanel({
   const [phone, setPhone] = useState(pharmacy?.phone ?? "");
   const [whatsapp, setWhatsapp] = useState(pharmacy?.whatsapp_number ?? "");
   const [hours, setHours] = useState(pharmacy?.opening_hours ?? "");
+
   const [savingProfile, setSavingProfile] = useState(false);
 
   // Password form
@@ -468,11 +471,15 @@ function SettingsPanel({
           </div>
           <div>
             <Label>WhatsApp Number</Label>
-            <Input className="mt-1.5" value={whatsapp} onChange={(e) => setWhatsapp(e.target.value)} placeholder="+263..." />
+            <div className="mt-1.5">
+              <WhatsAppInput value={whatsapp} onChange={setWhatsapp} />
+            </div>
           </div>
           <div>
             <Label>Opening Hours</Label>
-            <Input className="mt-1.5" value={hours} onChange={(e) => setHours(e.target.value)} placeholder="Mon-Fri 8am-6pm, Sat 8am-1pm" />
+            <div className="mt-1.5">
+              <OpeningHoursPicker value={hours} onChange={setHours} />
+            </div>
           </div>
           {pharmacy?.verified && (
             <Badge variant="default" className="gap-1"><CheckCircle2 className="h-3 w-3" /> Verified</Badge>
