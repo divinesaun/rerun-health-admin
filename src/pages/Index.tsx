@@ -90,32 +90,36 @@ const Index = () => {
   const inStockCount = medicines.filter((m) => m.inStock).length;
 
   // ── Handlers ─────────────────────────────────────────────────────────
-  const handleAdd = useCallback(async (data: Omit<Medicine, "id" | "searches" | "updatedAt">) => {
+  const handleAdd = useCallback(async (data: Omit<Medicine, "id" | "searches" | "updatedAt">, medicineId?: string) => {
     try {
-      const searchRes = await inventoryApi.searchMedicines(data.name);
-      const match = searchRes.medicines?.[0];
-      if (match) {
-        const res = await inventoryApi.add({
-          medicine_id: match.id,
-          price: data.price,
-          in_stock: data.inStock,
-          quantity_available: data.quantity,
-        });
-        const newMed: Medicine = {
-          id: res.item.id,
-          name: match.name,
-          genericName: match.generic_name ?? undefined,
-          price: data.price,
-          inStock: data.inStock,
-          quantity: data.quantity,
-          searches: 0,
-          updatedAt: new Date(),
-        };
-        setMedicines((prev) => [newMed, ...prev]);
-        toast({ title: "Medicine added", description: `${data.name} has been added to inventory.` });
-      } else {
-        toast({ title: "Not found", description: `${data.name} was not found in the master database.`, variant: "destructive" });
+      let medId = medicineId;
+      if (!medId) {
+        const searchRes = await inventoryApi.searchMedicines(data.name);
+        const match = searchRes.medicines?.[0];
+        if (!match) {
+          toast({ title: "Not found", description: `${data.name} was not found in the master database.`, variant: "destructive" });
+          return;
+        }
+        medId = match.id;
       }
+      const res = await inventoryApi.add({
+        medicine_id: medId,
+        price: data.price,
+        in_stock: data.inStock,
+        quantity_available: data.quantity,
+      });
+      const newMed: Medicine = {
+        id: res.item.id,
+        name: data.name,
+        genericName: data.genericName,
+        price: data.price,
+        inStock: data.inStock,
+        quantity: data.quantity,
+        searches: 0,
+        updatedAt: new Date(),
+      };
+      setMedicines((prev) => [newMed, ...prev]);
+      toast({ title: "Medicine added", description: `${data.name} has been added to inventory.` });
     } catch {
       toast({ title: "Error", description: "Failed to add medicine. Try again.", variant: "destructive" });
     }
@@ -424,15 +428,15 @@ function SettingsPanel({
     }
     setSavingPass(true);
     try {
-      const res = await authApi.changePassword({
+      await authApi.changePassword({
         current_password: curPass,
         new_password: newPass,
         confirm_new_password: confirmPass,
       });
-      setToken(res.access_token);
       setCurPass("");
       setNewPass("");
       setConfirmPass("");
+      toast({ title: "Password changed", description: "Your password has been updated." });
       toast({ title: "Password changed", description: "Your password has been updated." });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to change password.";

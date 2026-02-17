@@ -116,7 +116,7 @@ export const authApi = {
   me: () => api.get<{ user: PharmacyUser }>("/api/pharmacy/auth/me"),
 
   changePassword: (payload: ChangePasswordPayload) =>
-    api.post<{ access_token: string; message: string }>("/api/pharmacy/auth/change-password", payload),
+    api.post<{ message: string }>("/api/pharmacy/auth/change-password", payload),
 
   logout: () => api.post("/api/pharmacy/auth/logout"),
 };
@@ -209,7 +209,7 @@ export const medicineApi = {
 export const analyticsApi = {
   dashboard: () =>
     api.get<{ overview: Record<string, unknown>; trending_medicines: unknown[]; recent_inquiries: unknown[] }>(
-      "/api/pharmacy/analytics"
+      "/api/pharmacy/analytics/dashboard"
     ),
 
   trending: () => api.get<{ trending: unknown[] }>("/api/pharmacy/analytics/trending"),
