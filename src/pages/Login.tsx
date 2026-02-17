@@ -5,12 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,12 +21,21 @@ const Login = () => {
       return;
     }
     setLoading(true);
-    // TODO: Replace with your FastAPI auth endpoint
-    setTimeout(() => {
+    try {
+      const data = await login(email, password);
+      if (data.must_change_password) {
+        toast({ title: "Password change required", description: "Please set a new password." });
+        navigate("/change-password");
+      } else {
+        toast({ title: "Welcome back!", description: "You have been logged in." });
+        navigate("/");
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Invalid credentials.";
+      toast({ title: "Login failed", description: message, variant: "destructive" });
+    } finally {
       setLoading(false);
-      toast({ title: "Welcome back!", description: "You have been logged in." });
-      navigate("/");
-    }, 1000);
+    }
   };
 
   return (
@@ -80,10 +91,8 @@ const Login = () => {
         </Card>
 
         <p className="text-center text-sm text-muted-foreground">
-          Don't have an account?{" "}
-          <Link to="/signup" className="font-medium text-primary hover:underline">
-            Sign up
-          </Link>
+          Pharmacy accounts are created by the admin.
+          Contact your administrator for access.
         </p>
       </div>
     </div>

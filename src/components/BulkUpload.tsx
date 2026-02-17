@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
 import { BarChart3, Download, Upload, CheckCircle2, AlertTriangle } from "lucide-react";
+import { inventoryApi } from "@/lib/api";
 
 const BulkUpload = () => {
   const [uploading, setUploading] = useState(false);
@@ -12,7 +13,7 @@ const BulkUpload = () => {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleDownloadTemplate = () => {
-    const csv = "name,generic_name,price,stock,quantity\nParacetamol 500mg,Acetaminophen,1.50,in_stock,50\nAmoxicillin 250mg,Amoxicillin,5.00,out_of_stock,0";
+    const csv = "medicine_name,price,in_stock,quantity_available\nParacetamol 500mg,1.50,true,In Stock\nAmoxicillin 250mg,5.00,false,0";
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -22,25 +23,23 @@ const BulkUpload = () => {
     URL.revokeObjectURL(url);
   };
 
-  const simulateUpload = () => {
+  const handleFileChange = async () => {
+    const file = fileRef.current?.files?.[0];
+    if (!file) return;
     setUploading(true);
-    setProgress(0);
+    setProgress(20);
     setResult(null);
-    const interval = setInterval(() => {
-      setProgress((p) => {
-        if (p >= 100) {
-          clearInterval(interval);
-          setUploading(false);
-          setResult({ success: 45, failed: 2 });
-          return 100;
-        }
-        return p + 10;
-      });
-    }, 200);
-  };
-
-  const handleFileChange = () => {
-    simulateUpload();
+    try {
+      setProgress(50);
+      const res = await inventoryApi.bulkUpload(file);
+      setProgress(100);
+      setResult({ success: res.success.length, failed: res.errors.length });
+    } catch {
+      setResult({ success: 0, failed: 1 });
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
   };
 
   return (
@@ -96,8 +95,8 @@ const BulkUpload = () => {
         <div className="rounded-md bg-muted p-3">
           <p className="text-xs font-medium text-foreground mb-1">CSV Format:</p>
           <ul className="text-xs text-muted-foreground space-y-0.5">
-            <li>• Required: name, price, stock</li>
-            <li>• Optional: generic_name, quantity</li>
+            <li>• Required: medicine_name, price, in_stock</li>
+            <li>• Optional: quantity_available</li>
           </ul>
         </div>
       </CardContent>
