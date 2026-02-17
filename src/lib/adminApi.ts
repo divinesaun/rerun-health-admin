@@ -24,7 +24,7 @@ export const adminAuthApi = {
   logout: () => api.post("/api/admin/auth/logout"),
 };
 
-// ── Pharmacy Management ───────────────────────────────────────────────────
+// ── Pharmacy Management (CRUD via /api/admin/pharmacies) ──────────────────
 
 export interface AdminPharmacy {
   id: string;
@@ -64,9 +64,9 @@ export const adminPharmacyApi = {
   delete: (id: string) => api.delete(`/api/admin/pharmacies/${id}`),
 };
 
-// ── User Management ───────────────────────────────────────────────────────
+// ── Pharmacy User Management (via /api/admin/pharmacy-users) ──────────────
 
-export interface AdminManagedUser {
+export interface PharmacyManagedUser {
   id: string;
   email: string;
   name: string | null;
@@ -75,17 +75,38 @@ export interface AdminManagedUser {
   role: string;
   created_at: string;
   is_active: boolean;
+  must_change_password?: boolean;
 }
 
-export const adminUserApi = {
-  list: () => api.get<{ users: AdminManagedUser[] }>("/api/admin/users"),
-  get: (id: string) => api.get<{ user: AdminManagedUser }>(`/api/admin/users/${id}`),
-  update: (id: string, payload: Partial<AdminManagedUser>) =>
-    api.put<{ user: AdminManagedUser }>(`/api/admin/users/${id}`, payload),
-  deactivate: (id: string) => api.post(`/api/admin/users/${id}/deactivate`),
+export interface CreatePharmacyUserPayload {
+  email: string;
+  password: string;
+  name?: string;
+  pharmacy_id: string;
+  role?: string;
+}
+
+export interface ResetPasswordPayload {
+  new_password: string;
+}
+
+export const adminPharmacyUserApi = {
+  list: (pharmacyId?: string) => {
+    const params = pharmacyId ? `?pharmacy_id=${pharmacyId}` : "";
+    return api.get<{ users: PharmacyManagedUser[] }>(`/api/admin/pharmacy-users${params}`);
+  },
+  get: (id: string) => api.get<{ user: PharmacyManagedUser }>(`/api/admin/pharmacy-users/${id}`),
+  create: (payload: CreatePharmacyUserPayload) =>
+    api.post<{ user: PharmacyManagedUser }>("/api/admin/pharmacy-users", payload),
+  update: (id: string, payload: Partial<PharmacyManagedUser>) =>
+    api.put<{ user: PharmacyManagedUser }>(`/api/admin/pharmacy-users/${id}`, payload),
+  resetPassword: (id: string, payload: ResetPasswordPayload) =>
+    api.post<{ message: string }>(`/api/admin/pharmacy-users/${id}/reset-password`, payload),
+  deactivate: (id: string) => api.post(`/api/admin/pharmacy-users/${id}/deactivate`),
+  activate: (id: string) => api.post(`/api/admin/pharmacy-users/${id}/activate`),
 };
 
-// ── Medicine Database ─────────────────────────────────────────────────────
+// ── Medicine Database (Full CRUD via /api/medicines) ──────────────────────
 
 export interface AdminMedicine {
   id: string;
@@ -114,18 +135,19 @@ export const adminMedicineApi = {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     params.set("limit", String(limit));
-    return api.get<{ medicines: AdminMedicine[] }>(`/api/admin/medicines?${params}`);
+    return api.get<{ medicines: AdminMedicine[] }>(`/api/medicines?${params}`);
   },
+  get: (id: string) => api.get<{ medicine: AdminMedicine }>(`/api/medicines/${id}`),
   create: (payload: CreateMedicinePayload) =>
-    api.post<{ medicine: AdminMedicine }>("/api/admin/medicines", payload),
+    api.post<{ medicine: AdminMedicine }>("/api/medicines", payload),
   update: (id: string, payload: Partial<CreateMedicinePayload>) =>
-    api.put<{ medicine: AdminMedicine }>(`/api/admin/medicines/${id}`, payload),
-  delete: (id: string) => api.delete(`/api/admin/medicines/${id}`),
+    api.put<{ medicine: AdminMedicine }>(`/api/medicines/${id}`, payload),
+  delete: (id: string) => api.delete(`/api/medicines/${id}`),
 };
 
-// ── Admin Analytics ───────────────────────────────────────────────────────
+// ── Analytics (via /api/pharmacy/analytics) ───────────────────────────────
 
-export interface AdminAnalytics {
+export interface AdminOverviewStats {
   total_pharmacies: number;
   total_users: number;
   total_medicines: number;
@@ -134,17 +156,44 @@ export interface AdminAnalytics {
   recent_signups: number;
 }
 
+export interface TrendingMedicine {
+  medicine_id: string;
+  medicine_name: string;
+  search_count: number;
+}
+
+export interface RecentInquiry {
+  id: string;
+  query: string;
+  user_location?: string;
+  created_at: string;
+}
+
 export const adminAnalyticsApi = {
-  overview: () => api.get<{ analytics: AdminAnalytics }>("/api/admin/analytics"),
-  searchTrends: () => api.get<{ trends: unknown[] }>("/api/admin/analytics/trends"),
+  dashboard: () =>
+    api.get<{
+      overview: AdminOverviewStats;
+      trending_medicines: TrendingMedicine[];
+      recent_inquiries: RecentInquiry[];
+    }>("/api/pharmacy/analytics"),
+  trending: () => api.get<{ trending: TrendingMedicine[] }>("/api/pharmacy/analytics/trending"),
+  inquiries: () => api.get<{ inquiries: RecentInquiry[] }>("/api/pharmacy/inquiries"),
 };
 
-// ── Admin Settings ────────────────────────────────────────────────────────
+// ── System Settings (JWT, Email, Twilio, OCR, OpenRouter) ─────────────────
+
+export interface SystemSettings {
+  jwt?: { secret_key?: string; algorithm?: string; expiry_minutes?: number };
+  email?: { smtp_host?: string; smtp_port?: number; smtp_user?: string; smtp_password?: string; from_email?: string };
+  twilio?: { account_sid?: string; auth_token?: string; whatsapp_from?: string };
+  ocr?: { provider?: string; api_key?: string };
+  openrouter?: { api_key?: string; model?: string };
+}
 
 export const adminSettingsApi = {
-  get: () => api.get<{ settings: Record<string, unknown> }>("/api/admin/settings"),
-  update: (payload: Record<string, unknown>) =>
-    api.put<{ settings: Record<string, unknown> }>("/api/admin/settings", payload),
+  get: () => api.get<{ settings: SystemSettings }>("/api/admin/settings"),
+  update: (payload: Partial<SystemSettings>) =>
+    api.put<{ settings: SystemSettings }>("/api/admin/settings", payload),
 };
 
 export { ApiError };
