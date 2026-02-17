@@ -1,0 +1,201 @@
+import { useState } from "react";
+import {
+  LayoutDashboard,
+  Building2,
+  Users,
+  Pill,
+  BarChart3,
+  Settings,
+  LogOut,
+  ChevronLeft,
+  Menu,
+  ShieldCheck,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { AdminTabType } from "@/types/admin";
+
+interface AdminSidebarProps {
+  activeTab: AdminTabType;
+  onTabChange: (tab: AdminTabType) => void;
+  onLogout: () => void;
+  adminName?: string;
+  adminEmail?: string;
+}
+
+const adminNav: { title: string; value: AdminTabType; icon: React.ElementType }[] = [
+  { title: "Overview", value: "overview", icon: LayoutDashboard },
+  { title: "Pharmacies", value: "pharmacies", icon: Building2 },
+  { title: "Users", value: "users", icon: Users },
+  { title: "Medicines", value: "medicines", icon: Pill },
+  { title: "Analytics", value: "analytics", icon: BarChart3 },
+  { title: "Settings", value: "settings", icon: Settings },
+];
+
+function AdminSidebarNav({
+  activeTab,
+  onTabChange,
+  onLogout,
+  collapsed = false,
+  adminName = "Admin",
+  adminEmail = "",
+}: {
+  activeTab: AdminTabType;
+  onTabChange: (tab: AdminTabType) => void;
+  onLogout: () => void;
+  collapsed?: boolean;
+  adminName?: string;
+  adminEmail?: string;
+}) {
+  const initials = adminName
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  return (
+    <>
+      <nav className="flex-1 overflow-y-auto px-2 py-4">
+        {!collapsed && (
+          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Administration
+          </p>
+        )}
+        <ul className="space-y-1">
+          {adminNav.map((item) => {
+            const isActive = activeTab === item.value;
+            return (
+              <li key={item.title}>
+                <button
+                  onClick={() => onTabChange(item.value)}
+                  className={cn(
+                    "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+                    collapsed && "justify-center px-0"
+                  )}
+                  title={collapsed ? item.title : undefined}
+                >
+                  <item.icon className="h-4 w-4 shrink-0" />
+                  {!collapsed && <span>{item.title}</span>}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </nav>
+
+      <div className="border-t p-2">
+        <button
+          onClick={onLogout}
+          className={cn(
+            "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
+            collapsed && "justify-center px-0"
+          )}
+          title={collapsed ? "Log out" : undefined}
+        >
+          <LogOut className="h-4 w-4 shrink-0" />
+          {!collapsed && <span>Log out</span>}
+        </button>
+
+        {!collapsed && (
+          <>
+            <Separator className="my-2" />
+            <div className="flex items-center gap-3 px-3 py-2">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                {initials}
+              </div>
+              <div className="overflow-hidden">
+                <p className="truncate text-sm font-medium text-foreground">{adminName}</p>
+                <p className="truncate text-xs text-muted-foreground">{adminEmail}</p>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </>
+  );
+}
+
+export function AdminDesktopSidebar({ activeTab, onTabChange, onLogout, adminName, adminEmail }: AdminSidebarProps) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <aside
+      className={cn(
+        "sticky top-0 hidden h-screen flex-col border-r bg-background transition-all duration-300 md:flex",
+        collapsed ? "w-16" : "w-60"
+      )}
+    >
+      <div className={cn("flex h-16 items-center border-b px-4", collapsed ? "justify-center" : "justify-between")}>
+        {!collapsed && (
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <div>
+              <p className="text-sm font-bold leading-tight text-foreground">RERUN Admin</p>
+              <p className="text-[10px] text-muted-foreground">System Management</p>
+            </div>
+          </div>
+        )}
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setCollapsed(!collapsed)}>
+          {collapsed ? <Menu className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+        </Button>
+      </div>
+
+      <AdminSidebarNav
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        onLogout={onLogout}
+        collapsed={collapsed}
+        adminName={adminName}
+        adminEmail={adminEmail}
+      />
+    </aside>
+  );
+}
+
+export function AdminMobileSidebar({ activeTab, onTabChange, onLogout, adminName, adminEmail }: AdminSidebarProps) {
+  const [open, setOpen] = useState(false);
+
+  const handleTabChange = (tab: AdminTabType) => {
+    onTabChange(tab);
+    setOpen(false);
+  };
+
+  const handleLogout = () => {
+    onLogout();
+    setOpen(false);
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-9 w-9 md:hidden">
+          <Menu className="h-5 w-5" />
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-72 p-0 flex flex-col">
+        <div className="flex h-16 items-center border-b px-4">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            <div>
+              <p className="text-sm font-bold leading-tight text-foreground">RERUN Admin</p>
+              <p className="text-[10px] text-muted-foreground">System Management</p>
+            </div>
+          </div>
+        </div>
+        <AdminSidebarNav
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+          onLogout={handleLogout}
+          adminName={adminName}
+          adminEmail={adminEmail}
+        />
+      </SheetContent>
+    </Sheet>
+  );
+}

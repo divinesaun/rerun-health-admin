@@ -94,6 +94,9 @@ const Login = () => {
           Pharmacy accounts are created by the admin.
           Contact your administrator for access.
         </p>
+        <p className="text-center text-xs text-muted-foreground">
+          <a href="/admin/login" className="text-primary hover:underline">Admin Portal →</a>
+        </p>
       </div>
     </div>
   );

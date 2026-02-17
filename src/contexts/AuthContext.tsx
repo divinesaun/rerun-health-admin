@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import { authApi, type PharmacyUser, type LoginResponse } from "@/lib/api";
+import { adminAuthApi, type AdminLoginResponse } from "@/lib/adminApi";
 
 interface AuthState {
   user: PharmacyUser | null;
@@ -7,10 +8,12 @@ interface AuthState {
   mustChangePassword: boolean;
   isLoading: boolean;
   isAuthenticated: boolean;
+  isAdmin: boolean;
 }
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<LoginResponse>;
+  loginAdmin: (email: string, password: string) => Promise<AdminLoginResponse>;
   logout: () => void;
   setToken: (token: string) => void;
   clearMustChangePassword: () => void;
@@ -25,6 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mustChangePassword: false,
     isLoading: true,
     isAuthenticated: false,
+    isAdmin: localStorage.getItem("user_role") === "admin",
   });
 
   const fetchUser = useCallback(async () => {
@@ -61,18 +65,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       mustChangePassword: data.must_change_password,
       isLoading: false,
       isAuthenticated: true,
+      isAdmin: false,
+    });
+    localStorage.setItem("user_role", "pharmacy");
+    return data;
+  };
+
+  const loginAdmin = async (email: string, password: string): Promise<AdminLoginResponse> => {
+    const data = await adminAuthApi.login(email, password);
+    localStorage.setItem("access_token", data.access_token);
+    localStorage.setItem("user_role", "admin");
+    setState({
+      user: data.user as unknown as PharmacyUser,
+      token: data.access_token,
+      mustChangePassword: false,
+      isLoading: false,
+      isAuthenticated: true,
+      isAdmin: true,
     });
     return data;
   };
 
   const logout = () => {
     localStorage.removeItem("access_token");
+    localStorage.removeItem("user_role");
     setState({
       user: null,
       token: null,
       mustChangePassword: false,
       isLoading: false,
       isAuthenticated: false,
+      isAdmin: false,
     });
   };
 
@@ -86,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout, setToken, clearMustChangePassword }}>
+    <AuthContext.Provider value={{ ...state, login, loginAdmin, logout, setToken, clearMustChangePassword }}>
       {children}
     </AuthContext.Provider>
   );
