@@ -54,6 +54,9 @@ import {
   type TrendingMedicine,
   type SystemSettings,
 } from "@/lib/adminApi";
+import { RegisterPharmacyDialog } from "@/components/admin/RegisterPharmacyDialog";
+import { AddMedicineDialog } from "@/components/admin/AddMedicineDialog";
+import { UserActionsDropdown } from "@/components/admin/UserActionsDropdown";
 
 const AdminDashboard = () => {
   const [tab, setTab] = useState<AdminTabType>("overview");
@@ -269,9 +272,7 @@ function PharmaciesTab() {
           <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Search pharmacies..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
-        <Button className="gap-1.5">
-          <Plus className="h-4 w-4" /> Register Pharmacy
-        </Button>
+        <RegisterPharmacyDialog />
       </div>
 
       {isLoading ? (
@@ -399,9 +400,7 @@ function UsersTab() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
+                    <UserActionsDropdown user={u} />
                   </TableCell>
                 </TableRow>
               ))}
@@ -431,9 +430,7 @@ function MedicinesTab() {
           <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Search medicines..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
-        <Button className="gap-1.5">
-          <Plus className="h-4 w-4" /> Add Medicine
-        </Button>
+        <AddMedicineDialog />
       </div>
 
       {isLoading ? (
