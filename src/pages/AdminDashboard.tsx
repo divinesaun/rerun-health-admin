@@ -57,6 +57,9 @@ import {
 import { RegisterPharmacyDialog } from "@/components/admin/RegisterPharmacyDialog";
 import { AddMedicineDialog } from "@/components/admin/AddMedicineDialog";
 import { UserActionsDropdown } from "@/components/admin/UserActionsDropdown";
+import { PharmacyActionsDropdown } from "@/components/admin/PharmacyActionsDropdown";
+import { MedicineActionsDropdown } from "@/components/admin/MedicineActionsDropdown";
+import { AddPharmacyUserDialog } from "@/components/admin/AddPharmacyUserDialog";
 
 const AdminDashboard = () => {
   const [tab, setTab] = useState<AdminTabType>("overview");
@@ -320,9 +323,7 @@ function PharmaciesTab() {
                   <TableCell className="text-muted-foreground text-sm">{p.phone || "—"}</TableCell>
                   <TableCell className="text-muted-foreground text-sm">{p.created_at?.slice(0, 10)}</TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
+                    <PharmacyActionsDropdown pharmacy={p} />
                   </TableCell>
                 </TableRow>
               ))}
@@ -357,6 +358,7 @@ function UsersTab() {
           <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Search users..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
+        <AddPharmacyUserDialog />
       </div>
 
       {isLoading ? (
@@ -472,9 +474,7 @@ function MedicinesTab() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
+                    <MedicineActionsDropdown medicine={m} />
                   </TableCell>
                 </TableRow>
               ))}
