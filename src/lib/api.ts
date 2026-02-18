@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || "https://rrerun-health-backend.vercel.app";
+const API_BASE_URL = (import.meta.env.VITE_API_URL || "https://rrerun-health-backend.vercel.app").replace(/\/$/, "");
 
 interface RequestOptions {
   method?: string;
