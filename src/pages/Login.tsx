@@ -39,11 +39,11 @@ const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm space-y-6">
+    <div className="flex h-[100dvh] items-center justify-center bg-background px-4 overflow-hidden">
+      <div className="w-full max-w-sm space-y-4 sm:space-y-6">
         <div className="text-center">
-          <span className="text-3xl">💊</span>
-          <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground">RERUN Health AI</h1>
+          <img src="/favicon.ico" alt="RERUN Health" className="mx-auto h-10 w-10" />
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground">RERUN Health</h1>
           <p className="text-sm text-muted-foreground">Connecting Zimbabweans to Medicine</p>
         </div>
 

@@ -9,4 +9,4 @@ export interface Medicine {
   updatedAt: Date;
 }
 
-export type TabType = "inventory" | "analytics" | "alerts" | "settings";
+export type TabType = "dashboard" | "inventory" | "profile" | "analytics" | "inquiries" | "account" | "help";

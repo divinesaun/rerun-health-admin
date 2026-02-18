@@ -41,7 +41,7 @@ const pharmacySchema = z.object({
     .regex(/^(\+?\d[\d\s-]{6,18})?$/, "Invalid WhatsApp number")
     .optional()
     .or(z.literal("")),
-  opening_hours: z.string().trim().max(100).optional().or(z.literal("")),
+  opening_hours: z.string().trim().max(2000).optional().or(z.literal("")),
   contact_name: z.string().trim().min(2, "Contact name is required").max(100),
 });
 

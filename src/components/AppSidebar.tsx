@@ -1,13 +1,15 @@
 import { useState } from "react";
 import {
+  LayoutDashboard,
   Package,
+  Store,
   BarChart3,
-  Bell,
-  Settings,
+  MessageSquare,
+  User,
+  HelpCircle,
   LogOut,
   ChevronLeft,
   Menu,
-  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,11 +26,14 @@ interface AppSidebarProps {
   alertCount?: number;
 }
 
-const mainNav: { title: string; value: TabType; icon: React.ElementType }[] = [
-  { title: "Inventory", value: "inventory", icon: Package },
+const mainNav: { title: string; value: TabType; icon: React.ElementType; badge?: "alert" }[] = [
+  { title: "Dashboard", value: "dashboard", icon: LayoutDashboard },
+  { title: "Inventory", value: "inventory", icon: Package, badge: "alert" },
+  { title: "Profile & Settings", value: "profile", icon: Store },
   { title: "Analytics", value: "analytics", icon: BarChart3 },
-  { title: "Alerts", value: "alerts", icon: Bell },
-  { title: "Settings", value: "settings", icon: Settings },
+  { title: "Inquiries", value: "inquiries", icon: MessageSquare },
+  { title: "Account", value: "account", icon: User },
+  { title: "Help & Support", value: "help", icon: HelpCircle },
 ];
 
 function SidebarNav({
@@ -48,32 +53,20 @@ function SidebarNav({
   userEmail?: string;
   alertCount?: number;
 }) {
-  const initials = pharmacyName
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-
   return (
     <>
-      <nav className="flex-1 overflow-y-auto px-2 py-4">
-        {!collapsed && (
-          <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            General
-          </p>
-        )}
-        <ul className="space-y-1">
+      <nav className="flex-1 overflow-y-auto px-2 py-3">
+        <ul className="space-y-0.5">
           {mainNav.map((item) => {
             const isActive = activeTab === item.value;
             return (
-              <li key={item.title}>
+              <li key={item.value}>
                 <button
                   onClick={() => onTabChange(item.value)}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                    "relative flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                     isActive
-                      ? "bg-accent text-accent-foreground"
+                      ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-accent hover:text-accent-foreground",
                     collapsed && "justify-center px-0"
                   )}
@@ -81,13 +74,13 @@ function SidebarNav({
                 >
                   <item.icon className="h-4 w-4 shrink-0" />
                   {!collapsed && <span>{item.title}</span>}
-                  {item.value === "alerts" && alertCount > 0 && !collapsed && (
-                    <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">
+                  {item.badge === "alert" && alertCount > 0 && !collapsed && (
+                    <span className="ml-auto flex h-5 min-w-[20px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground">
                       {alertCount > 9 ? "9+" : alertCount}
                     </span>
                   )}
-                  {item.value === "alerts" && alertCount > 0 && collapsed && (
-                    <span className="absolute right-1 top-0.5 h-2 w-2 rounded-full bg-destructive" />
+                  {item.badge === "alert" && alertCount > 0 && collapsed && (
+                    <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-destructive" />
                   )}
                 </button>
               </li>
@@ -113,9 +106,7 @@ function SidebarNav({
           <>
             <Separator className="my-2" />
             <div className="flex items-center gap-3 px-3 py-2">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
-                {initials}
-              </div>
+              <img src="/favicon.ico" alt="Logo" className="h-8 w-8 shrink-0 rounded-full" />
               <div className="overflow-hidden">
                 <p className="truncate text-sm font-medium text-foreground">{pharmacyName}</p>
                 <p className="truncate text-xs text-muted-foreground">{userEmail}</p>
@@ -139,10 +130,10 @@ export function AppSidebar({ activeTab, onTabChange, onLogout, pharmacyName, use
         collapsed ? "w-16" : "w-60"
       )}
     >
-      <div className={cn("flex h-16 items-center border-b px-4", collapsed ? "justify-center" : "justify-between")}>
+      <div className={cn("flex h-14 items-center border-b px-4", collapsed ? "justify-center" : "justify-between")}>
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <span className="text-lg">💊</span>
+            <img src="/favicon.ico" alt="Logo" className="h-7 w-7" />
             <div>
               <p className="text-sm font-bold leading-tight text-foreground">RERUN Health</p>
               <p className="text-[10px] text-muted-foreground">Pharmacy Dashboard</p>
@@ -181,11 +172,11 @@ export function MobileSidebar({ activeTab, onTabChange, onLogout, pharmacyName, 
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-72 p-0 flex flex-col">
-        <div className="flex h-16 items-center justify-between border-b px-4">
+        <div className="flex h-14 items-center justify-between border-b px-4">
           <div className="flex items-center gap-2">
-            <span className="text-lg">💊</span>
+            <img src="/favicon.ico" alt="Logo" className="h-7 w-7" />
             <div>
-              <p className="text-sm font-bold leading-tight text-foreground">RERUN Health AI</p>
+              <p className="text-sm font-bold leading-tight text-foreground">RERUN Health</p>
               <p className="text-[10px] text-muted-foreground">Pharmacy Dashboard</p>
             </div>
           </div>

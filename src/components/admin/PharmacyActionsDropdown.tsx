@@ -52,7 +52,7 @@ const editSchema = z.object({
   phone: z.string().trim().max(20).regex(/^(\+?\d[\d\s-]{6,18})?$/, "Invalid phone").optional().or(z.literal("")),
   email: z.string().trim().email("Invalid email").max(255).optional().or(z.literal("")),
   whatsapp_number: z.string().trim().max(20).regex(/^(\+?\d[\d\s-]{6,18})?$/, "Invalid number").optional().or(z.literal("")),
-  opening_hours: z.string().trim().max(100).optional().or(z.literal("")),
+  opening_hours: z.string().trim().max(2000).optional().or(z.literal("")),
 });
 
 type EditFormData = z.infer<typeof editSchema>;

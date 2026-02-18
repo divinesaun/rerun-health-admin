@@ -6,7 +6,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { ShieldCheck } from "lucide-react";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -35,13 +34,11 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm space-y-6">
+    <div className="flex h-[100dvh] items-center justify-center bg-background px-4 overflow-hidden">
+      <div className="w-full max-w-sm space-y-4 sm:space-y-6">
         <div className="text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-            <ShieldCheck className="h-6 w-6 text-primary" />
-          </div>
-          <h1 className="mt-3 text-2xl font-bold tracking-tight text-foreground">RERUN Health AI</h1>
+          <img src="/favicon.ico" alt="RERUN Health" className="mx-auto h-10 w-10" />
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-foreground">RERUN Health</h1>
           <p className="text-sm text-muted-foreground">Admin Portal</p>
         </div>
 
