@@ -14,6 +14,8 @@ import {
   Eye,
   X,
   FileUp,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { inventoryApi } from "@/lib/api";
 
@@ -199,6 +201,27 @@ const BulkUpload = () => {
     setValidation(v);
   };
 
+  const handleAddRow = () => {
+    if (!parsed) return;
+    const emptyRow = parsed.headers.map(() => "");
+    const newRows = [...parsed.rows, emptyRow];
+    const newRaw = [parsed.headers.join(","), ...newRows.map((r) => r.join(","))].join("\n");
+    const updated: ParsedCsv = { headers: parsed.headers, rows: newRows, rawText: newRaw };
+    const v = validateCsv(updated);
+    setParsed(updated);
+    setValidation(v);
+  };
+
+  const handleDeleteRow = (rowIdx: number) => {
+    if (!parsed) return;
+    const newRows = parsed.rows.filter((_, i) => i !== rowIdx);
+    const newRaw = [parsed.headers.join(","), ...newRows.map((r) => r.join(","))].join("\n");
+    const updated: ParsedCsv = { headers: parsed.headers, rows: newRows, rawText: newRaw };
+    const v = validateCsv(updated);
+    setParsed(updated);
+    setValidation(v);
+  };
+
   const previewRows = parsed?.rows.slice(0, 10) ?? [];
   const hasMore = (parsed?.rows.length ?? 0) > 10;
 
@@ -256,11 +279,16 @@ const BulkUpload = () => {
             <div className="rounded-md border overflow-x-auto">
               <div className="flex items-center justify-between px-3 py-2 border-b bg-muted/50">
                 <span className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                  <Eye className="h-3.5 w-3.5" /> Preview
+                  <Eye className="h-3.5 w-3.5" /> Preview ({parsed.rows.length} rows)
                 </span>
-                <button onClick={handleClear} className="text-muted-foreground hover:text-foreground transition-colors">
-                  <X className="h-3.5 w-3.5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button onClick={handleAddRow} className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors font-medium">
+                    <Plus className="h-3.5 w-3.5" /> Add Row
+                  </button>
+                  <button onClick={handleClear} className="text-muted-foreground hover:text-foreground transition-colors">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
               <table className="w-full text-xs">
                 <thead>
@@ -273,11 +301,12 @@ const BulkUpload = () => {
                         </th>
                       );
                     })}
+                    <th className="w-8" />
                   </tr>
                 </thead>
                 <tbody>
                   {previewRows.map((row, ri) => (
-                    <tr key={ri} className="border-b last:border-b-0">
+                    <tr key={ri} className="border-b last:border-b-0 group">
                       {row.map((cell, ci) => (
                         <td key={ci} className="px-1 py-0.5">
                           <input
@@ -287,6 +316,15 @@ const BulkUpload = () => {
                           />
                         </td>
                       ))}
+                      <td className="px-1 py-0.5">
+                        <button
+                          onClick={() => handleDeleteRow(ri)}
+                          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-all p-1"
+                          title="Remove row"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>

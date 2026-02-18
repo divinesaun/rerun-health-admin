@@ -11,6 +11,23 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import {
   Building2,
@@ -33,6 +50,10 @@ import {
   Brain,
   KeyRound,
   Save,
+  Trash2,
+  Download,
+  FileJson,
+  FileSpreadsheet,
 } from "lucide-react";
 import {
   Table,
@@ -257,25 +278,130 @@ function OverviewTab({ onNavigate }: { onNavigate: (tab: AdminTabType) => void }
 
 // ── Pharmacies Tab ────────────────────────────────────────────────────────
 
+function exportData(items: Record<string, unknown>[], format: "json" | "csv", filename: string) {
+  let content: string;
+  let mimeType: string;
+  if (format === "json") {
+    content = JSON.stringify(items, null, 2);
+    mimeType = "application/json";
+  } else {
+    if (items.length === 0) return;
+    const keys = Object.keys(items[0]);
+    const rows = [keys.join(","), ...items.map((item) => keys.map((k) => `"${String(item[k] ?? "").replace(/"/g, '""')}"`).join(","))];
+    content = rows.join("\n");
+    mimeType = "text/csv";
+  }
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${filename}.${format}`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 function PharmaciesTab() {
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "verified" | "pending">("all");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const queryClient = useQueryClient();
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin", "pharmacies"],
     queryFn: () => adminPharmacyApi.list(),
   });
 
-  const pharmacies = (data?.pharmacies ?? []).filter(
-    (p) => !search || p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const pharmacies = (data?.pharmacies ?? []).filter((p) => {
+    if (search && !p.name.toLowerCase().includes(search.toLowerCase())) return false;
+    if (statusFilter === "verified" && !p.verified) return false;
+    if (statusFilter === "pending" && p.verified) return false;
+    return true;
+  });
+
+  const allSelected = pharmacies.length > 0 && pharmacies.every((p) => selected.has(p.id));
+  const someSelected = selected.size > 0;
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(pharmacies.map((p) => p.id)));
+    }
+  };
+
+  const toggleOne = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBatchDelete = async () => {
+    setDeleting(true);
+    let ok = 0;
+    let fail = 0;
+    for (const id of selected) {
+      try { await adminPharmacyApi.delete(id); ok++; } catch { fail++; }
+    }
+    setDeleting(false);
+    setConfirmDelete(false);
+    setSelected(new Set());
+    queryClient.invalidateQueries({ queryKey: ["admin", "pharmacies"] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "analytics"] });
+    toast({ title: "Batch delete", description: `${ok} deleted${fail > 0 ? `, ${fail} failed` : ""}` });
+  };
+
+  const handleExport = (format: "json" | "csv") => {
+    const items = pharmacies.filter((p) => (someSelected ? selected.has(p.id) : true));
+    exportData(items.map(({ id, name, address, suburb, city, phone, email, whatsapp_number, verified, created_at, rating }) => ({ id, name, address, suburb, city, phone, email, whatsapp_number, verified, rating, created_at })), format, "pharmacies");
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative max-w-sm">
-          <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search pharmacies..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 flex-1">
+          <div className="relative max-w-sm flex-1">
+            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder="Search pharmacies..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          </div>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as "all" | "verified" | "pending")}
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+          >
+            <option value="all">All Status</option>
+            <option value="verified">Verified</option>
+            <option value="pending">Pending</option>
+          </select>
         </div>
-        <RegisterPharmacyDialog />
+        <div className="flex items-center gap-2">
+          {someSelected && (
+            <>
+              <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setConfirmDelete(true)}>
+                <Trash2 className="h-3.5 w-3.5" /> Delete ({selected.size})
+              </Button>
+              <Separator orientation="vertical" className="h-6" />
+            </>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Download className="h-3.5 w-3.5" /> Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExport("csv")} className="gap-2">
+                <FileSpreadsheet className="h-4 w-4" /> Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("json")} className="gap-2">
+                <FileJson className="h-4 w-4" /> Export as JSON
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <RegisterPharmacyDialog />
+        </div>
       </div>
 
       {isLoading ? (
@@ -294,6 +420,9 @@ function PharmaciesTab() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
+                </TableHead>
                 <TableHead>Pharmacy Name</TableHead>
                 <TableHead>Location</TableHead>
                 <TableHead>Status</TableHead>
@@ -304,7 +433,10 @@ function PharmaciesTab() {
             </TableHeader>
             <TableBody>
               {pharmacies.map((p: AdminPharmacy) => (
-                <TableRow key={p.id}>
+                <TableRow key={p.id} className={selected.has(p.id) ? "bg-muted/50" : ""}>
+                  <TableCell>
+                    <Checkbox checked={selected.has(p.id)} onCheckedChange={() => toggleOne(p.id)} />
+                  </TableCell>
                   <TableCell className="font-medium">{p.name}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {[p.suburb, p.city].filter(Boolean).join(", ") || p.address}
@@ -331,6 +463,24 @@ function PharmaciesTab() {
           </Table>
         </Card>
       )}
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selected.size} pharmacy{selected.size !== 1 ? "ies" : ""}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the selected pharmacies and all associated users, inventory, and inquiries. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBatchDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5">
+              {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Delete All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -339,26 +489,118 @@ function PharmaciesTab() {
 
 function UsersTab() {
   const [search, setSearch] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const queryClient = useQueryClient();
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin", "pharmacy-users"],
     queryFn: () => adminPharmacyUserApi.list(),
   });
 
-  const users = (data?.users ?? []).filter(
-    (u) =>
-      !search ||
-      u.name?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email.toLowerCase().includes(search.toLowerCase())
-  );
+  const users = (data?.users ?? []).filter((u) => {
+    if (search && !u.name?.toLowerCase().includes(search.toLowerCase()) && !u.email.toLowerCase().includes(search.toLowerCase())) return false;
+    if (roleFilter !== "all" && u.role !== roleFilter) return false;
+    if (statusFilter === "active" && !u.is_active) return false;
+    if (statusFilter === "inactive" && u.is_active) return false;
+    return true;
+  });
+
+  const allSelected = users.length > 0 && users.every((u) => selected.has(u.id));
+  const someSelected = selected.size > 0;
+
+  const toggleAll = () => {
+    if (allSelected) setSelected(new Set());
+    else setSelected(new Set(users.map((u) => u.id)));
+  };
+
+  const toggleOne = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBatchDelete = async () => {
+    setDeleting(true);
+    let ok = 0;
+    let fail = 0;
+    for (const id of selected) {
+      try { await adminPharmacyUserApi.delete(id); ok++; } catch { fail++; }
+    }
+    setDeleting(false);
+    setConfirmDelete(false);
+    setSelected(new Set());
+    queryClient.invalidateQueries({ queryKey: ["admin", "pharmacy-users"] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "pharmacies"] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "analytics"] });
+    toast({ title: "Batch delete", description: `${ok} deleted${fail > 0 ? `, ${fail} failed` : ""}` });
+  };
+
+  const handleExport = (format: "json" | "csv") => {
+    const items = users.filter((u) => (someSelected ? selected.has(u.id) : true));
+    exportData(items.map(({ id, name, email, pharmacy_name, role, is_active, created_at }) => ({ id, name, email, pharmacy_name, role, is_active, created_at })), format, "pharmacy_users");
+  };
+
+  const roles = [...new Set((data?.users ?? []).map((u) => u.role))];
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative max-w-sm">
-          <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search users..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 flex-1">
+          <div className="relative max-w-sm flex-1">
+            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder="Search users..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          </div>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+          >
+            <option value="all">All Roles</option>
+            {roles.map((r) => (
+              <option key={r} value={r}>{r.replace(/_/g, " ")}</option>
+            ))}
+          </select>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as "all" | "active" | "inactive")}
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+          >
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
         </div>
-        <AddPharmacyUserDialog />
+        <div className="flex items-center gap-2">
+          {someSelected && (
+            <>
+              <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setConfirmDelete(true)}>
+                <Trash2 className="h-3.5 w-3.5" /> Delete ({selected.size})
+              </Button>
+              <Separator orientation="vertical" className="h-6" />
+            </>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Download className="h-3.5 w-3.5" /> Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExport("csv")} className="gap-2">
+                <FileSpreadsheet className="h-4 w-4" /> Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("json")} className="gap-2">
+                <FileJson className="h-4 w-4" /> Export as JSON
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <AddPharmacyUserDialog />
+        </div>
       </div>
 
       {isLoading ? (
@@ -377,6 +619,9 @@ function UsersTab() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
+                </TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Pharmacy</TableHead>
@@ -387,7 +632,10 @@ function UsersTab() {
             </TableHeader>
             <TableBody>
               {users.map((u: PharmacyManagedUser) => (
-                <TableRow key={u.id}>
+                <TableRow key={u.id} className={selected.has(u.id) ? "bg-muted/50" : ""}>
+                  <TableCell>
+                    <Checkbox checked={selected.has(u.id)} onCheckedChange={() => toggleOne(u.id)} />
+                  </TableCell>
                   <TableCell className="font-medium">{u.name || "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{u.email}</TableCell>
                   <TableCell className="text-muted-foreground">{u.pharmacy_name || "—"}</TableCell>
@@ -410,6 +658,24 @@ function UsersTab() {
           </Table>
         </Card>
       )}
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selected.size} user{selected.size !== 1 ? "s" : ""}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the selected users and their associated pharmacies, inventory, and inquiries. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBatchDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5">
+              {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Delete All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
