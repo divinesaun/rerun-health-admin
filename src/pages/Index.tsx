@@ -217,7 +217,7 @@ const Index = () => {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top header bar */}
-        <header className="sticky top-0 z-40 flex h-12 items-center gap-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-3 md:h-14 md:px-6 shrink-0">
+        <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:h-16 md:px-6 shrink-0">
           <MobileSidebar
             activeTab={tab}
             onTabChange={setTab}
@@ -226,16 +226,15 @@ const Index = () => {
             userEmail={user?.email}
             alertCount={outOfStockCount}
           />
-          <h1 className="text-base font-semibold text-foreground md:text-lg truncate">{PAGE_TITLES[tab]}</h1>
           <div className="flex-1" />
-          <p className="hidden sm:block text-xs text-muted-foreground truncate max-w-[200px]">{pharmacyName}</p>
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-primary-foreground shrink-0">
+          <p className="hidden sm:block text-sm text-muted-foreground truncate max-w-[200px]">{pharmacyName}</p>
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground shrink-0">
             {initials}
           </div>
         </header>
 
         {/* Main content — scrollable */}
-        <main className="flex-1 overflow-y-auto px-3 py-3 md:px-6 md:py-5">
+        <main className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
           {/* Loading state */}
           {loading && (
             <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
@@ -264,48 +263,55 @@ const Index = () => {
               ) : (
                 <div>
                   {medicines.length > 0 && (
-                    <div className="grid gap-3 grid-cols-3 mb-4">
+                    <div className="grid gap-4 sm:grid-cols-3 mb-6">
                       <Card>
-                        <CardContent className="pt-4 pb-3 px-3 md:pt-5 md:pb-4 md:px-5">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-medium text-muted-foreground">Total</span>
-                            <Package className="h-3.5 w-3.5 text-muted-foreground" />
-                          </div>
-                          <div className="text-xl md:text-2xl font-bold text-foreground">{medicines.length}</div>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                          <CardTitle className="text-sm font-medium text-muted-foreground">Total Medicines</CardTitle>
+                          <Package className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-foreground">{medicines.length}</div>
+                          <p className="text-xs text-muted-foreground mt-1">in your inventory</p>
                         </CardContent>
                       </Card>
                       <Card>
-                        <CardContent className="pt-4 pb-3 px-3 md:pt-5 md:pb-4 md:px-5">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-medium text-muted-foreground">In Stock</span>
-                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                          </div>
-                          <div className="text-xl md:text-2xl font-bold text-foreground">{inStockCount}</div>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                          <CardTitle className="text-sm font-medium text-muted-foreground">In Stock</CardTitle>
+                          <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-foreground">{inStockCount}</div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {medicines.length > 0 ? `${Math.round((inStockCount / medicines.length) * 100)}% available` : "—"}
+                          </p>
                         </CardContent>
                       </Card>
                       <Card>
-                        <CardContent className="pt-4 pb-3 px-3 md:pt-5 md:pb-4 md:px-5">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-medium text-muted-foreground">Out</span>
-                            <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
-                          </div>
-                          <div className="text-xl md:text-2xl font-bold text-foreground">{outOfStockCount}</div>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                          <CardTitle className="text-sm font-medium text-muted-foreground">Out of Stock</CardTitle>
+                          <AlertTriangle className="h-4 w-4 text-destructive" />
+                        </CardHeader>
+                        <CardContent>
+                          <div className="text-2xl font-bold text-foreground">{outOfStockCount}</div>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {outOfStockCount > 0 ? "needs attention" : "all stocked"}
+                          </p>
                         </CardContent>
                       </Card>
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center justify-between mb-6">
                     <Tabs value={inventorySubTab} onValueChange={setInventorySubTab} className="w-auto">
-                      <TabsList className="h-9">
-                        <TabsTrigger value="overview" className="text-xs">Inventory</TabsTrigger>
-                        <TabsTrigger value="manage" className="text-xs">Add / Upload</TabsTrigger>
+                      <TabsList className="h-10">
+                        <TabsTrigger value="overview">Inventory</TabsTrigger>
+                        <TabsTrigger value="manage">Add / Upload</TabsTrigger>
                       </TabsList>
                     </Tabs>
                     {inventorySubTab === "overview" && medicines.length > 0 && (
-                      <Button variant="outline" size="sm" className="gap-1.5 h-9 text-xs" onClick={handleExportCSV}>
-                        <Download className="h-3.5 w-3.5" />
-                        <span className="hidden sm:inline">Export CSV</span>
+                      <Button variant="outline" size="sm" className="gap-1.5" onClick={handleExportCSV}>
+                        <Download className="h-4 w-4" />
+                        Export CSV
                       </Button>
                     )}
                   </div>
@@ -319,7 +325,7 @@ const Index = () => {
                   )}
 
                   {inventorySubTab === "manage" && (
-                    <div className="grid gap-4 lg:grid-cols-2">
+                    <div className="grid gap-6 lg:grid-cols-2">
                       <QuickAddForm onAdd={handleAdd} />
                       <BulkUpload />
                     </div>
@@ -413,113 +419,133 @@ function DashboardHome({
   const lowStock = medicines.filter((m) => !m.inStock).slice(0, 5);
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-6">
       {/* Highlight cards */}
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => onNavigate("inventory")}>
-          <CardContent className="pt-4 pb-3 px-3 md:pt-5 md:pb-4 md:px-5">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-muted-foreground">Medicines</span>
-              <Package className="h-3.5 w-3.5 text-muted-foreground" />
-            </div>
-            <div className="text-xl md:text-2xl font-bold">{medicines.length}</div>
-            <p className="text-[10px] md:text-xs text-muted-foreground">{inStockCount} in stock</p>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Medicines</CardTitle>
+            <Package className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{medicines.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">{inStockCount} in stock</p>
           </CardContent>
         </Card>
         <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => onNavigate("analytics")}>
-          <CardContent className="pt-4 pb-3 px-3 md:pt-5 md:pb-4 md:px-5">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-muted-foreground">Searches</span>
-              <Search className="h-3.5 w-3.5 text-muted-foreground" />
-            </div>
-            <div className="text-xl md:text-2xl font-bold">{pharmacy?.total_searches ?? totalSearches}</div>
-            <p className="text-[10px] md:text-xs text-muted-foreground">across inventory</p>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Searches</CardTitle>
+            <Search className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{pharmacy?.total_searches ?? totalSearches}</div>
+            <p className="text-xs text-muted-foreground mt-1">across inventory</p>
           </CardContent>
         </Card>
         <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => onNavigate("inquiries")}>
-          <CardContent className="pt-4 pb-3 px-3 md:pt-5 md:pb-4 md:px-5">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-muted-foreground">Inquiries</span>
-              <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
-            </div>
-            <div className="text-xl md:text-2xl font-bold">{pharmacy?.total_inquiries ?? 0}</div>
-            <p className="text-[10px] md:text-xs text-muted-foreground">customer contacts</p>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Inquiries</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{pharmacy?.total_inquiries ?? 0}</div>
+            <p className="text-xs text-muted-foreground mt-1">customer contacts</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 pb-3 px-3 md:pt-5 md:pb-4 md:px-5">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-xs font-medium text-muted-foreground">Rating</span>
-              <Star className="h-3.5 w-3.5 text-amber-400" />
-            </div>
-            <div className="text-xl md:text-2xl font-bold">{pharmacy?.rating ?? "—"}</div>
-            <p className="text-[10px] md:text-xs text-muted-foreground">{pharmacy?.total_reviews ?? 0} reviews</p>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Rating</CardTitle>
+            <Star className="h-4 w-4 text-amber-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{pharmacy?.rating ?? "—"}</div>
+            <p className="text-xs text-muted-foreground mt-1">{pharmacy?.total_reviews ?? 0} reviews</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Quick Actions */}
-      <div className="flex flex-wrap gap-2">
-        <Button size="sm" className="gap-1.5 h-8 text-xs" onClick={() => onNavigate("inventory")}>
-          <Plus className="h-3.5 w-3.5" /> Add Medicine
-        </Button>
-        <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={() => onNavigate("inventory")}>
-          <Upload className="h-3.5 w-3.5" /> Bulk Upload
-        </Button>
-        <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={() => onNavigate("profile")}>
-          <Star className="h-3.5 w-3.5" /> Update Profile
-        </Button>
-        <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={() => onNavigate("inquiries")}>
-          <MessageSquare className="h-3.5 w-3.5" /> View Inquiries
-        </Button>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Quick Actions</CardTitle>
+          <CardDescription>Common tasks for your pharmacy</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-3 sm:grid-cols-2">
+          <Button variant="outline" className="justify-start gap-2" onClick={() => onNavigate("inventory")}>
+            <Plus className="h-4 w-4" /> Add Medicine
+          </Button>
+          <Button variant="outline" className="justify-start gap-2" onClick={() => onNavigate("inventory")}>
+            <Upload className="h-4 w-4" /> Bulk Upload CSV
+          </Button>
+          <Button variant="outline" className="justify-start gap-2" onClick={() => onNavigate("profile")}>
+            <Star className="h-4 w-4" /> Update Profile
+          </Button>
+          <Button variant="outline" className="justify-start gap-2" onClick={() => onNavigate("inquiries")}>
+            <MessageSquare className="h-4 w-4" /> View Inquiries
+          </Button>
+        </CardContent>
+      </Card>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         {/* Most searched */}
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-semibold">Most Searched</CardTitle>
+          <CardHeader>
+            <CardTitle className="text-base">Most Searched</CardTitle>
+            <CardDescription>Top medicines by customer searches</CardDescription>
           </CardHeader>
           <CardContent>
             {topMedicines.length === 0 ? (
-              <p className="py-4 text-center text-xs text-muted-foreground">No search data yet.</p>
-            ) : (
-              <div className="space-y-2">
-                {topMedicines.map((m, i) => (
-                  <div key={m.id} className="flex items-center gap-2">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[10px] font-semibold">{i + 1}</span>
-                    <span className="text-sm truncate flex-1">{m.name}</span>
-                    <Badge variant={m.inStock ? "default" : "destructive"} className="text-[10px] shrink-0">{m.inStock ? "In Stock" : "Out"}</Badge>
-                    <span className="text-xs text-muted-foreground w-12 text-right">{m.searches} hits</span>
-                  </div>
-                ))}
+              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                <TrendingUp className="h-8 w-8 mb-2 opacity-40" />
+                <p className="text-sm">No search data yet</p>
               </div>
+            ) : (
+              <ul className="space-y-2">
+                {topMedicines.map((m, i) => (
+                  <li key={m.id} className="flex items-center justify-between text-sm">
+                    <span className="flex items-center gap-2">
+                      <span className="flex h-5 w-5 items-center justify-center rounded bg-muted text-[10px] font-bold text-muted-foreground">{i + 1}</span>
+                      <span className="font-medium text-foreground">{m.name}</span>
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <Badge variant={m.inStock ? "default" : "destructive"} className="text-xs">{m.inStock ? "In Stock" : "Out"}</Badge>
+                      <span className="text-muted-foreground">{m.searches} searches</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
             )}
           </CardContent>
         </Card>
 
         {/* Stock alerts */}
         <Card>
-          <CardHeader className="pb-3">
+          <CardHeader>
             <div className="flex items-center justify-between">
-              <CardTitle className="text-sm font-semibold">Stock Alerts</CardTitle>
+              <div>
+                <CardTitle className="text-base">Stock Alerts</CardTitle>
+                <CardDescription>Items that need attention</CardDescription>
+              </div>
               {outOfStockCount > 0 && (
-                <Badge variant="destructive" className="text-[10px]">{outOfStockCount} out</Badge>
+                <Badge variant="destructive">{outOfStockCount} out of stock</Badge>
               )}
             </div>
           </CardHeader>
           <CardContent>
             {lowStock.length === 0 ? (
-              <p className="py-4 text-center text-xs text-muted-foreground">All stock levels look good!</p>
+              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+                <CheckCircle2 className="h-8 w-8 mb-2 opacity-40" />
+                <p className="text-sm">All stock levels look good!</p>
+              </div>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {lowStock.map((m) => (
-                  <div key={m.id} className="flex items-center justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{m.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{m.searches} searches</p>
+                  <div key={m.id} className="flex flex-col gap-2 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{m.name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Out of Stock · {m.searches} searches recently</p>
                     </div>
-                    <Button size="sm" variant="outline" className="h-7 text-[10px] shrink-0" onClick={() => onRestock(m.id)}>
+                    <Button size="sm" variant="outline" className="self-start" onClick={() => onRestock(m.id)}>
                       Restock
                     </Button>
                   </div>
@@ -611,142 +637,155 @@ function ProfilePanel({
     d ? new Date(d).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" }) : "—";
 
   return (
-    <div className="space-y-5 md:space-y-8">
+    <div className="space-y-6">
       {/* Overview badges */}
-      <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardContent className="flex items-center gap-2 pt-4 pb-3 px-3">
-            {pharmacy?.verified ? <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" /> : <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />}
+          <CardContent className="flex items-center gap-3 pt-5 pb-4">
+            {pharmacy?.verified ? <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0" /> : <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0" />}
             <div className="min-w-0">
-              <p className="text-xs font-medium truncate">{pharmacy?.verified ? "Verified" : "Not Verified"}</p>
-              <p className="text-[10px] text-muted-foreground">Since {fmtDate(pharmacy?.created_at)}</p>
+              <p className="text-sm font-medium truncate">{pharmacy?.verified ? "Verified" : "Not Verified"}</p>
+              <p className="text-xs text-muted-foreground">Since {fmtDate(pharmacy?.created_at)}</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-2 pt-4 pb-3 px-3">
-            <Star className="h-4 w-4 text-amber-400 shrink-0" />
+          <CardContent className="flex items-center gap-3 pt-5 pb-4">
+            <Star className="h-5 w-5 text-amber-400 shrink-0" />
             <div>
-              <p className="text-xs font-medium">{pharmacy?.rating ?? "0.00"}</p>
-              <p className="text-[10px] text-muted-foreground">{pharmacy?.total_reviews ?? 0} reviews</p>
+              <p className="text-sm font-medium">{pharmacy?.rating ?? "0.00"}</p>
+              <p className="text-xs text-muted-foreground">{pharmacy?.total_reviews ?? 0} reviews</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-2 pt-4 pb-3 px-3">
-            <Search className="h-4 w-4 text-blue-500 shrink-0" />
+          <CardContent className="flex items-center gap-3 pt-5 pb-4">
+            <Search className="h-5 w-5 text-blue-500 shrink-0" />
             <div>
-              <p className="text-xs font-medium">{pharmacy?.total_searches ?? 0}</p>
-              <p className="text-[10px] text-muted-foreground">Searches</p>
+              <p className="text-sm font-medium">{pharmacy?.total_searches ?? 0}</p>
+              <p className="text-xs text-muted-foreground">Searches</p>
             </div>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="flex items-center gap-2 pt-4 pb-3 px-3">
-            <MessageSquare className="h-4 w-4 text-violet-500 shrink-0" />
+          <CardContent className="flex items-center gap-3 pt-5 pb-4">
+            <MessageSquare className="h-5 w-5 text-violet-500 shrink-0" />
             <div>
-              <p className="text-xs font-medium">{pharmacy?.total_inquiries ?? 0}</p>
-              <p className="text-[10px] text-muted-foreground">Inquiries</p>
+              <p className="text-sm font-medium">{pharmacy?.total_inquiries ?? 0}</p>
+              <p className="text-xs text-muted-foreground">Inquiries</p>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Business Information */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Business Information</CardTitle>
+          <CardHeader>
+            <CardTitle className="text-base">Business Information</CardTitle>
+            <CardDescription>Name, location, and identity</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div><Label className="text-xs">Pharmacy Name</Label><Input className="mt-1 h-9 text-sm" value={name} onChange={(e) => setName(e.target.value)} /></div>
-            <div><Label className="text-xs">Chain / Group</Label><Input className="mt-1 h-9 text-sm" value={chainName} onChange={(e) => setChainName(e.target.value)} placeholder="e.g. Pick n Pay Pharmacy" /></div>
-            <div><Label className="text-xs">Address</Label><Input className="mt-1 h-9 text-sm" value={address} onChange={(e) => setAddress(e.target.value)} /></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label className="text-xs">Suburb</Label><Input className="mt-1 h-9 text-sm" value={suburb} onChange={(e) => setSuburb(e.target.value)} /></div>
-              <div><Label className="text-xs">City</Label><Input className="mt-1 h-9 text-sm" value={city} onChange={(e) => setCity(e.target.value)} placeholder="Harare" /></div>
+          <CardContent className="space-y-4">
+            <div><Label>Pharmacy Name</Label><Input className="mt-1.5" value={name} onChange={(e) => setName(e.target.value)} /></div>
+            <div><Label>Chain / Group Name</Label><Input className="mt-1.5" value={chainName} onChange={(e) => setChainName(e.target.value)} placeholder="e.g. Pick n Pay Pharmacy" /></div>
+            <div><Label>Address</Label><Input className="mt-1.5" value={address} onChange={(e) => setAddress(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Suburb</Label><Input className="mt-1.5" value={suburb} onChange={(e) => setSuburb(e.target.value)} /></div>
+              <div><Label>City</Label><Input className="mt-1.5" value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Harare" /></div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Contact Details</CardTitle>
+          <CardHeader>
+            <CardTitle className="text-base">Contact Details</CardTitle>
+            <CardDescription>How customers can reach your pharmacy</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div><Label className="text-xs">Phone</Label><div className="mt-1"><WhatsAppInput value={phone} onChange={setPhone} placeholder="77 123 4567" /></div></div>
-            <div><Label className="text-xs">WhatsApp</Label><div className="mt-1"><WhatsAppInput value={whatsapp} onChange={setWhatsapp} placeholder="77 123 4567" /></div></div>
-            <div><Label className="text-xs">Email</Label><Input className="mt-1 h-9 text-sm" type="email" value={pharmacyEmail} onChange={(e) => setPharmacyEmail(e.target.value)} placeholder="info@pharmacy.co.zw" /></div>
+          <CardContent className="space-y-4">
+            <div><Label>Phone</Label><div className="mt-1.5"><WhatsAppInput value={phone} onChange={setPhone} placeholder="77 123 4567" /></div></div>
+            <div><Label>WhatsApp Number</Label><div className="mt-1.5"><WhatsAppInput value={whatsapp} onChange={setWhatsapp} placeholder="77 123 4567" /></div></div>
+            <div><Label>Email</Label><Input className="mt-1.5" type="email" value={pharmacyEmail} onChange={(e) => setPharmacyEmail(e.target.value)} placeholder="info@pharmacy.co.zw" /></div>
           </CardContent>
         </Card>
       </div>
 
       {/* Hours & Location */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm">Opening Hours</CardTitle>
+          <CardHeader>
+            <CardTitle className="text-base">Opening Hours</CardTitle>
+            <CardDescription>Tap a day to toggle open/closed, then set times</CardDescription>
           </CardHeader>
           <CardContent>
             <OpeningHoursPicker value={hours} onChange={setHours} />
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2"><MapPin className="h-3.5 w-3.5" /> Map Coordinates</CardTitle>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2"><MapPin className="h-4 w-4" /> Map Coordinates</CardTitle>
+            <CardDescription>Used to show your pharmacy on the map and calculate distance</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label className="text-xs">Latitude</Label><Input className="mt-1 h-9 text-sm" value={latitude} onChange={(e) => setLatitude(e.target.value)} placeholder="-17.8252" /></div>
-              <div><Label className="text-xs">Longitude</Label><Input className="mt-1 h-9 text-sm" value={longitude} onChange={(e) => setLongitude(e.target.value)} placeholder="31.0522" /></div>
+            <div className="grid grid-cols-2 gap-4">
+              <div><Label>Latitude</Label><Input className="mt-1.5" value={latitude} onChange={(e) => setLatitude(e.target.value)} placeholder="-17.8252" /></div>
+              <div><Label>Longitude</Label><Input className="mt-1.5" value={longitude} onChange={(e) => setLongitude(e.target.value)} placeholder="31.0522" /></div>
             </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Services */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader className="pb-3"><CardTitle className="text-sm">Services</CardTitle></CardHeader>
-          <CardContent className="space-y-0">
+          <CardHeader>
+            <CardTitle className="text-base">What You Offer</CardTitle>
+            <CardDescription>Helps customers find the right pharmacy</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-1">
             {[
-              { label: "Accepts Medical Aid", sub: "Insurance payments", val: acceptsMedicalAid, set: setAcceptsMedicalAid },
-              { label: "Delivery Service", sub: "Deliver to customers", val: hasDelivery, set: setHasDelivery },
-              { label: "Open 24 Hours", sub: "Around the clock", val: is24Hours, set: setIs24Hours },
-              { label: "Parking Available", sub: "On-site parking", val: parkingAvailable, set: setParkingAvailable },
+              { label: "Accepts Medical Aid", sub: "Medical aid / insurance payments", val: acceptsMedicalAid, set: setAcceptsMedicalAid },
+              { label: "Delivery Service", sub: "Deliver medicines to customers", val: hasDelivery, set: setHasDelivery },
+              { label: "Open 24 Hours", sub: "Operates around the clock", val: is24Hours, set: setIs24Hours },
+              { label: "Parking Available", sub: "On-site or nearby parking", val: parkingAvailable, set: setParkingAvailable },
             ].map((s, i) => (
               <div key={i}>
                 {i > 0 && <Separator />}
-                <div className="flex items-center justify-between py-2.5">
-                  <div><p className="text-xs font-medium">{s.label}</p><p className="text-[10px] text-muted-foreground">{s.sub}</p></div>
+                <div className="flex items-center justify-between py-3">
+                  <div><p className="text-sm font-medium">{s.label}</p><p className="text-xs text-muted-foreground">{s.sub}</p></div>
                   <Switch checked={s.val} onCheckedChange={s.set} />
                 </div>
               </div>
             ))}
           </CardContent>
         </Card>
-        <div className="space-y-4">
+        <div className="space-y-6">
           <Card>
-            <CardHeader className="pb-3"><CardTitle className="text-sm">Special Services</CardTitle></CardHeader>
+            <CardHeader>
+              <CardTitle className="text-base">Special Services</CardTitle>
+              <CardDescription>Additional services your pharmacy offers</CardDescription>
+            </CardHeader>
             <CardContent>
-              <Textarea value={specialServices} onChange={(e) => setSpecialServices(e.target.value)} placeholder="e.g. Blood pressure testing, vaccinations..." rows={3} className="text-sm" />
+              <Textarea value={specialServices} onChange={(e) => setSpecialServices(e.target.value)} placeholder="e.g. Blood pressure testing, vaccinations, compounding, diabetic care..." rows={4} />
             </CardContent>
           </Card>
           <Card>
-            <CardHeader className="pb-3"><CardTitle className="text-sm flex items-center gap-2"><Globe className="h-3.5 w-3.5" /> Online Presence</CardTitle></CardHeader>
-            <CardContent className="space-y-3">
-              <div><Label className="text-xs">Website</Label><Input className="mt-1 h-9 text-sm" type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://www.pharmacy.co.zw" /></div>
-              <div><Label className="text-xs">Facebook</Label><Input className="mt-1 h-9 text-sm" value={facebook} onChange={(e) => setFacebook(e.target.value)} placeholder="https://facebook.com/..." /></div>
-              <div><Label className="text-xs">Instagram</Label><Input className="mt-1 h-9 text-sm" value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="https://instagram.com/..." /></div>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2"><Globe className="h-4 w-4" /> Online Presence</CardTitle>
+              <CardDescription>Website and social media links</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div><Label>Website</Label><Input className="mt-1.5" type="url" value={website} onChange={(e) => setWebsite(e.target.value)} placeholder="https://www.pharmacy.co.zw" /></div>
+              <div><Label>Facebook</Label><Input className="mt-1.5" value={facebook} onChange={(e) => setFacebook(e.target.value)} placeholder="https://facebook.com/yourpharmacy" /></div>
+              <div><Label>Instagram</Label><Input className="mt-1.5" value={instagram} onChange={(e) => setInstagram(e.target.value)} placeholder="https://instagram.com/yourpharmacy" /></div>
             </CardContent>
           </Card>
         </div>
       </div>
 
-      <div className="flex justify-end pb-4">
-        <Button className="gap-2" onClick={handleSaveProfile} disabled={savingProfile}>
+      <div className="flex justify-end">
+        <Button size="lg" className="gap-2" onClick={handleSaveProfile} disabled={savingProfile}>
           {savingProfile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {savingProfile ? "Saving..." : "Save Profile"}
+          {savingProfile ? "Saving..." : "Save Pharmacy Profile"}
         </Button>
       </div>
     </div>
@@ -779,50 +818,68 @@ function InquiriesPanel() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid gap-3 grid-cols-3">
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-3">
         <Card>
-          <CardContent className="pt-4 pb-3 px-3">
-            <p className="text-xs text-muted-foreground">Total</p>
-            <p className="text-xl font-bold">{inquiries.length}</p>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Inquiries</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{inquiries.length}</div>
+            <p className="text-xs text-muted-foreground mt-1">all time</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 pb-3 px-3">
-            <p className="text-xs text-muted-foreground">This Week</p>
-            <p className="text-xl font-bold">{inquiries.filter((i) => {
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">This Week</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{inquiries.filter((i) => {
               if (!i.created_at) return false;
               const d = new Date(i.created_at);
               const now = new Date();
               return now.getTime() - d.getTime() < 7 * 24 * 60 * 60 * 1000;
-            }).length}</p>
+            }).length}</div>
+            <p className="text-xs text-muted-foreground mt-1">last 7 days</p>
           </CardContent>
         </Card>
         <Card>
-          <CardContent className="pt-4 pb-3 px-3">
-            <p className="text-xs text-muted-foreground">Today</p>
-            <p className="text-xl font-bold">{inquiries.filter((i) => {
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Today</CardTitle>
+            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{inquiries.filter((i) => {
               if (!i.created_at) return false;
               return new Date(i.created_at).toDateString() === new Date().toDateString();
-            }).length}</p>
+            }).length}</div>
+            <p className="text-xs text-muted-foreground mt-1">so far today</p>
           </CardContent>
         </Card>
       </div>
 
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm font-semibold">Recent Inquiries</CardTitle>
-          <CardDescription className="text-xs">Customer contacts about your pharmacy</CardDescription>
+        <CardHeader>
+          <CardTitle className="text-base">Recent Inquiries</CardTitle>
+          <CardDescription>Customer contacts about your pharmacy</CardDescription>
         </CardHeader>
         <CardContent>
           {inquiries.length === 0 ? (
-            <p className="py-8 text-center text-xs text-muted-foreground">No inquiries yet. Customers will appear here when they contact your pharmacy.</p>
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <MessageSquare className="h-8 w-8 mb-2 opacity-40" />
+              <p className="text-sm">No inquiries yet</p>
+              <p className="text-xs mt-1">Customers will appear here when they contact your pharmacy.</p>
+            </div>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {inquiries.slice(0, 20).map((inq, i) => (
-                <div key={inq.id ?? i} className="rounded-md border p-3">
-                  <p className="text-sm">{inq.message ?? "Customer inquiry"}</p>
-                  {inq.created_at && <p className="text-[10px] text-muted-foreground mt-1">{new Date(inq.created_at).toLocaleString()}</p>}
+                <div key={inq.id ?? i} className="flex flex-col gap-2 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{inq.message ?? "Customer inquiry"}</p>
+                    {inq.created_at && <p className="text-xs text-muted-foreground mt-0.5">{new Date(inq.created_at).toLocaleString()}</p>}
+                  </div>
                 </div>
               ))}
             </div>
@@ -876,44 +933,47 @@ function AccountPanel({
   };
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2 max-w-4xl">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm">Your Profile</CardTitle>
-          <CardDescription className="text-xs">Login and role information</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-0">
-          <div className="flex items-center justify-between py-2.5">
-            <span className="text-xs text-muted-foreground">Email</span>
-            <span className="text-xs font-medium">{user?.email ?? "—"}</span>
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between py-2.5">
-            <span className="text-xs text-muted-foreground">Name</span>
-            <span className="text-xs font-medium">{user?.name ?? "—"}</span>
-          </div>
-          <Separator />
-          <div className="flex items-center justify-between py-2.5">
-            <span className="text-xs text-muted-foreground">Role</span>
-            <Badge variant="secondary" className="text-[10px]">{user?.role ?? "manager"}</Badge>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Your Profile</CardTitle>
+            <CardDescription>Your personal login and role information</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <div className="flex items-center justify-between py-2.5">
+              <span className="text-sm text-muted-foreground">Login Email</span>
+              <span className="text-sm font-medium">{user?.email ?? "—"}</span>
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between py-2.5">
+              <span className="text-sm text-muted-foreground">Name</span>
+              <span className="text-sm font-medium">{user?.name ?? "—"}</span>
+            </div>
+            <Separator />
+            <div className="flex items-center justify-between py-2.5">
+              <span className="text-sm text-muted-foreground">Role</span>
+              <Badge variant="secondary">{user?.role ?? "manager"}</Badge>
+            </div>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2"><KeyRound className="h-3.5 w-3.5" /> Change Password</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div><Label className="text-xs">Current Password</Label><Input className="mt-1 h-9 text-sm" type="password" autoComplete="off" value={curPass} onChange={(e) => setCurPass(e.target.value)} placeholder="Enter current password" /></div>
-          <div><Label className="text-xs">New Password</Label><Input className="mt-1 h-9 text-sm" type="password" autoComplete="new-password" value={newPass} onChange={(e) => setNewPass(e.target.value)} placeholder="Min 8 chars, include a number" /></div>
-          <div><Label className="text-xs">Confirm New Password</Label><Input className="mt-1 h-9 text-sm" type="password" autoComplete="new-password" value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)} placeholder="Re-enter new password" /></div>
-          <Button variant="outline" className="w-full gap-1.5 h-9 text-xs" onClick={handleChangePassword} disabled={savingPass}>
-            {savingPass ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
-            {savingPass ? "Updating..." : "Update Password"}
-          </Button>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2"><KeyRound className="h-4 w-4" /> Change Password</CardTitle>
+            <CardDescription>Update your login password</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div><Label>Current Password</Label><Input className="mt-1.5" type="password" autoComplete="off" value={curPass} onChange={(e) => setCurPass(e.target.value)} placeholder="Enter current password" /></div>
+            <div><Label>New Password</Label><Input className="mt-1.5" type="password" autoComplete="new-password" value={newPass} onChange={(e) => setNewPass(e.target.value)} placeholder="Min 8 chars, include a number" /></div>
+            <div><Label>Confirm New Password</Label><Input className="mt-1.5" type="password" autoComplete="new-password" value={confirmPass} onChange={(e) => setConfirmPass(e.target.value)} placeholder="Re-enter new password" /></div>
+            <Button variant="outline" className="w-full gap-1.5" onClick={handleChangePassword} disabled={savingPass}>
+              {savingPass ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+              {savingPass ? "Updating..." : "Update Password"}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
@@ -935,21 +995,22 @@ function HelpPanel() {
   ];
 
   return (
-    <div className="space-y-5 max-w-4xl">
+    <div className="space-y-6">
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2"><BookOpen className="h-3.5 w-3.5" /> Getting Started</CardTitle>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2"><BookOpen className="h-4 w-4" /> Getting Started</CardTitle>
+          <CardDescription>Follow these steps to set up your pharmacy</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-3 sm:grid-cols-2">
             {guides.map((g, i) => (
-              <div key={i} className="flex gap-3 rounded-lg border p-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                  <g.icon className="h-4 w-4 text-primary" />
+              <div key={i} className="flex gap-3 rounded-lg border p-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+                  <g.icon className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium">{g.title}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{g.desc}</p>
+                  <p className="text-sm font-medium">{g.title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{g.desc}</p>
                 </div>
               </div>
             ))}
@@ -958,16 +1019,16 @@ function HelpPanel() {
       </Card>
 
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2"><FileText className="h-3.5 w-3.5" /> FAQs</CardTitle>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2"><FileText className="h-4 w-4" /> Frequently Asked Questions</CardTitle>
         </CardHeader>
         <CardContent className="space-y-0">
           {faqs.map((f, i) => (
             <div key={i}>
               {i > 0 && <Separator />}
               <div className="py-3">
-                <p className="text-xs font-medium">{f.q}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">{f.a}</p>
+                <p className="text-sm font-medium">{f.q}</p>
+                <p className="text-xs text-muted-foreground mt-1">{f.a}</p>
               </div>
             </div>
           ))}
@@ -975,17 +1036,18 @@ function HelpPanel() {
       </Card>
 
       <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm flex items-center gap-2"><Mail className="h-3.5 w-3.5" /> Contact Support</CardTitle>
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2"><Mail className="h-4 w-4" /> Contact Support</CardTitle>
+          <CardDescription>Get help from the RERUN Health team</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-2 text-xs">
+          <div className="flex flex-col gap-3 text-sm">
             <div className="flex items-center gap-2">
-              <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+              <Mail className="h-4 w-4 text-muted-foreground" />
               <a href="mailto:support@rerun.health" className="text-primary hover:underline">support@rerun.health</a>
             </div>
             <div className="flex items-center gap-2">
-              <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+              <ExternalLink className="h-4 w-4 text-muted-foreground" />
               <span className="text-muted-foreground">Reply to any system email for support</span>
             </div>
           </div>

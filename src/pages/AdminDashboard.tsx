@@ -684,21 +684,123 @@ function UsersTab() {
 
 function MedicinesTab() {
   const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [rxFilter, setRxFilter] = useState<"all" | "otc" | "rx">("all");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const queryClient = useQueryClient();
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin", "medicines", search],
-    queryFn: () => adminMedicineApi.list(search || undefined),
+    queryFn: () => adminMedicineApi.list(search || undefined, 200),
   });
 
-  const medicines = data?.medicines ?? [];
+  const allMedicines = data?.medicines ?? [];
+  const categories = [...new Set(allMedicines.map((m) => m.category).filter(Boolean))] as string[];
+
+  const medicines = allMedicines.filter((m) => {
+    if (categoryFilter !== "all" && m.category !== categoryFilter) return false;
+    if (rxFilter === "rx" && !m.requires_prescription) return false;
+    if (rxFilter === "otc" && m.requires_prescription) return false;
+    return true;
+  });
+
+  const allSelected = medicines.length > 0 && medicines.every((m) => selected.has(m.id));
+  const someSelected = selected.size > 0;
+
+  const toggleAll = () => {
+    if (allSelected) setSelected(new Set());
+    else setSelected(new Set(medicines.map((m) => m.id)));
+  };
+
+  const toggleOne = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const handleBatchDelete = async () => {
+    setDeleting(true);
+    let ok = 0;
+    let fail = 0;
+    for (const id of selected) {
+      try { await adminMedicineApi.delete(id); ok++; } catch { fail++; }
+    }
+    setDeleting(false);
+    setConfirmDelete(false);
+    setSelected(new Set());
+    queryClient.invalidateQueries({ queryKey: ["admin", "medicines"] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "analytics"] });
+    toast({ title: "Batch delete", description: `${ok} deleted${fail > 0 ? `, ${fail} failed` : ""}` });
+  };
+
+  const handleExport = (format: "json" | "csv") => {
+    const items = medicines.filter((m) => (someSelected ? selected.has(m.id) : true));
+    exportData(
+      items.map(({ id, name, generic_name, category, dosage_form, strength, requires_prescription, created_at }) => ({
+        id, name, generic_name, category, dosage_form, strength, requires_prescription, created_at,
+      })),
+      format,
+      "medicines"
+    );
+  };
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative max-w-sm">
-          <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search medicines..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 flex-1">
+          <div className="relative max-w-sm flex-1">
+            <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder="Search medicines..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          </div>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+          >
+            <option value="all">All Categories</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+          <select
+            value={rxFilter}
+            onChange={(e) => setRxFilter(e.target.value as "all" | "otc" | "rx")}
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm text-foreground"
+          >
+            <option value="all">All Types</option>
+            <option value="otc">OTC Only</option>
+            <option value="rx">Prescription Only</option>
+          </select>
         </div>
-        <AddMedicineDialog />
+        <div className="flex items-center gap-2">
+          {someSelected && (
+            <>
+              <Button variant="destructive" size="sm" className="gap-1.5" onClick={() => setConfirmDelete(true)}>
+                <Trash2 className="h-3.5 w-3.5" /> Delete ({selected.size})
+              </Button>
+              <Separator orientation="vertical" className="h-6" />
+            </>
+          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Download className="h-3.5 w-3.5" /> Export
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => handleExport("csv")} className="gap-2">
+                <FileSpreadsheet className="h-4 w-4" /> Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleExport("json")} className="gap-2">
+                <FileJson className="h-4 w-4" /> Export as JSON
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <AddMedicineDialog />
+        </div>
       </div>
 
       {isLoading ? (
@@ -709,7 +811,7 @@ function MedicinesTab() {
         <Card>
           <CardContent className="py-12 text-center text-muted-foreground">
             <Pill className="h-8 w-8 mx-auto mb-2 opacity-40" />
-            <p className="text-sm">{search ? "No medicines match your search" : "No medicines in database"}</p>
+            <p className="text-sm">{search || categoryFilter !== "all" || rxFilter !== "all" ? "No medicines match your filters" : "No medicines in database"}</p>
           </CardContent>
         </Card>
       ) : (
@@ -717,6 +819,9 @@ function MedicinesTab() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
+                </TableHead>
                 <TableHead>Medicine Name</TableHead>
                 <TableHead>Generic Name</TableHead>
                 <TableHead>Category</TableHead>
@@ -728,7 +833,10 @@ function MedicinesTab() {
             </TableHeader>
             <TableBody>
               {medicines.map((m: AdminMedicine) => (
-                <TableRow key={m.id}>
+                <TableRow key={m.id} className={selected.has(m.id) ? "bg-muted/50" : ""}>
+                  <TableCell>
+                    <Checkbox checked={selected.has(m.id)} onCheckedChange={() => toggleOne(m.id)} />
+                  </TableCell>
                   <TableCell className="font-medium">{m.name}</TableCell>
                   <TableCell className="text-muted-foreground">{m.generic_name || "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{m.category || "—"}</TableCell>
@@ -748,6 +856,24 @@ function MedicinesTab() {
           </Table>
         </Card>
       )}
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selected.size} medicine{selected.size !== 1 ? "s" : ""}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove the selected medicines from the database. Pharmacies with these medicines in inventory will be affected. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBatchDelete} disabled={deleting} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 gap-1.5">
+              {deleting && <Loader2 className="h-4 w-4 animate-spin" />}
+              Delete All
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
