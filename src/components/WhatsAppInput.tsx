@@ -1,6 +1,4 @@
-import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState, useEffect, useRef } from "react";
 import { cn } from "@/lib/utils";
 
 const COUNTRY_CODES = [
@@ -21,7 +19,6 @@ const COUNTRY_CODES = [
 function parsePhoneNumber(value: string): { countryCode: string; number: string } {
   if (!value) return { countryCode: "+263", number: "" };
 
-  // Try to match known country codes (longest first)
   const sorted = [...COUNTRY_CODES].sort((a, b) => b.code.length - a.code.length);
   const cleaned = value.replace(/\s/g, "");
 
@@ -31,7 +28,6 @@ function parsePhoneNumber(value: string): { countryCode: string; number: string 
     }
   }
 
-  // If starts with +, extract code
   if (cleaned.startsWith("+")) {
     const match = cleaned.match(/^(\+\d{1,3})(.*)/);
     if (match) return { countryCode: match[1], number: match[2] };
@@ -41,25 +37,25 @@ function parsePhoneNumber(value: string): { countryCode: string; number: string 
 }
 
 function formatLocalNumber(num: string): string {
-  // Remove non-digits
   const digits = num.replace(/\D/g, "");
-  // Format as groups: XX XXX XXXX
   if (digits.length <= 2) return digits;
   if (digits.length <= 5) return `${digits.slice(0, 2)} ${digits.slice(2)}`;
   return `${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5, 9)}`;
 }
 
-interface WhatsAppInputProps {
+interface PhoneInputProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
   className?: string;
 }
 
-export function WhatsAppInput({ value, onChange, placeholder, className }: WhatsAppInputProps) {
+export function WhatsAppInput({ value, onChange, placeholder, className }: PhoneInputProps) {
   const parsed = parsePhoneNumber(value);
   const [countryCode, setCountryCode] = useState(parsed.countryCode);
   const [localNumber, setLocalNumber] = useState(parsed.number);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const p = parsePhoneNumber(value);
@@ -67,18 +63,26 @@ export function WhatsAppInput({ value, onChange, placeholder, className }: Whats
     setLocalNumber(p.number);
   }, [value]);
 
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   const emitChange = (code: string, num: string) => {
     const digits = num.replace(/\D/g, "");
-    if (!digits) {
-      onChange("");
-      return;
-    }
+    if (!digits) { onChange(""); return; }
     onChange(`${code}${digits}`);
   };
 
-  const handleCodeChange = (code: string) => {
+  const handleCodeSelect = (code: string) => {
     setCountryCode(code);
     emitChange(code, localNumber);
+    setDropdownOpen(false);
   };
 
   const handleNumberChange = (raw: string) => {
@@ -90,28 +94,47 @@ export function WhatsAppInput({ value, onChange, placeholder, className }: Whats
   const selectedCC = COUNTRY_CODES.find((c) => c.code === countryCode);
 
   return (
-    <div className={cn("flex gap-1.5", className)}>
-      <Select value={countryCode} onValueChange={handleCodeChange}>
-        <SelectTrigger className="h-10 w-[110px] shrink-0 text-xs">
-          <SelectValue>
-            {selectedCC ? `${selectedCC.flag} ${selectedCC.code}` : countryCode}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent className="max-h-56">
+    <div ref={wrapperRef} className={cn("relative flex", className)}>
+      <button
+        type="button"
+        onClick={() => setDropdownOpen(!dropdownOpen)}
+        className="flex items-center gap-1 shrink-0 rounded-l-md border border-r-0 border-input bg-muted/50 px-2 text-xs h-10 hover:bg-muted transition-colors"
+      >
+        <span>{selectedCC?.flag ?? "🌍"}</span>
+        <span className="font-medium">{countryCode}</span>
+        <svg className="h-3 w-3 text-muted-foreground" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M3 5l3 3 3-3" />
+        </svg>
+      </button>
+      {dropdownOpen && (
+        <div className="absolute left-0 top-full z-50 mt-1 w-56 rounded-md border bg-popover shadow-lg max-h-52 overflow-y-auto">
           {COUNTRY_CODES.map((cc) => (
-            <SelectItem key={cc.country} value={cc.code} className="text-xs">
-              <span className="mr-1.5">{cc.flag}</span>
-              {cc.code} {cc.label}
-            </SelectItem>
+            <button
+              key={cc.country}
+              type="button"
+              className={cn(
+                "flex w-full items-center gap-2 px-3 py-2 text-sm hover:bg-accent transition-colors",
+                cc.code === countryCode && "bg-accent"
+              )}
+              onClick={() => handleCodeSelect(cc.code)}
+            >
+              <span>{cc.flag}</span>
+              <span className="font-medium">{cc.code}</span>
+              <span className="text-muted-foreground text-xs">{cc.label}</span>
+            </button>
           ))}
-        </SelectContent>
-      </Select>
-      <Input
+        </div>
+      )}
+      <input
+        type="tel"
+        inputMode="numeric"
         value={formatLocalNumber(localNumber)}
         onChange={(e) => handleNumberChange(e.target.value)}
         placeholder={placeholder || "77 123 4567"}
-        className="flex-1"
+        className="flex-1 min-w-0 h-10 rounded-r-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
       />
     </div>
   );
 }
+
+export { WhatsAppInput as PhoneInput };

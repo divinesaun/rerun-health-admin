@@ -1,7 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 const DAYS = [
@@ -34,13 +31,6 @@ const DEFAULT_SCHEDULE: WeekSchedule = {
   sun: { open: false, from: "08:00", to: "13:00" },
 };
 
-const TIMES: string[] = [];
-for (let h = 0; h < 24; h++) {
-  for (const m of ["00", "30"]) {
-    TIMES.push(`${String(h).padStart(2, "0")}:${m}`);
-  }
-}
-
 function formatTime(t: string) {
   const [h, m] = t.split(":");
   const hour = parseInt(h, 10);
@@ -51,7 +41,6 @@ function formatTime(t: string) {
 
 /** Serialize schedule to a human-readable string for the backend */
 function serializeSchedule(schedule: WeekSchedule): string {
-  // Group consecutive days with the same hours
   const groups: { days: string[]; from: string; to: string }[] = [];
   const closedDays: string[] = [];
 
@@ -113,7 +102,6 @@ export function OpeningHoursPicker({ value, onChange, className }: OpeningHoursP
   const [schedule, setSchedule] = useState<WeekSchedule>(() => parseSchedule(value));
 
   const emitChange = useCallback((newSchedule: WeekSchedule) => {
-    // Store as JSON for lossless round-trips, but the display string is generated on read
     onChange(JSON.stringify(newSchedule));
   }, [onChange]);
 
@@ -131,59 +119,49 @@ export function OpeningHoursPicker({ value, onChange, className }: OpeningHoursP
     });
   };
 
+  const toggleDay = (day: DayKey) => {
+    updateDay(day, { open: !schedule[day].open });
+  };
+
   const summary = serializeSchedule(schedule);
 
   return (
-    <div className={cn("space-y-3", className)}>
-      <div className="rounded-md border bg-card">
-        {DAYS.map((day, i) => {
+    <div className={cn("space-y-2", className)}>
+      <div className="rounded-md border bg-card divide-y">
+        {DAYS.map((day) => {
           const s = schedule[day.key];
           return (
-            <div
-              key={day.key}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2",
-                i < DAYS.length - 1 && "border-b"
-              )}
-            >
-              <Switch
-                checked={s.open}
-                onCheckedChange={(open) => updateDay(day.key, { open })}
-                className="shrink-0"
-              />
-              <Label className="w-10 text-xs font-medium shrink-0">
+            <div key={day.key} className="flex items-center gap-2 px-2 py-1.5 sm:px-3 sm:py-2">
+              <button
+                type="button"
+                onClick={() => toggleDay(day.key)}
+                className={cn(
+                  "shrink-0 w-10 text-center rounded-md py-1 text-xs font-semibold transition-colors",
+                  s.open
+                    ? "bg-primary/10 text-primary"
+                    : "bg-muted text-muted-foreground"
+                )}
+              >
                 {day.short}
-              </Label>
+              </button>
               {s.open ? (
-                <div className="flex items-center gap-1.5 text-sm">
-                  <Select value={s.from} onValueChange={(v) => updateDay(day.key, { from: v })}>
-                    <SelectTrigger className="h-8 w-[100px] text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-48">
-                      {TIMES.map((t) => (
-                        <SelectItem key={t} value={t} className="text-xs">
-                          {formatTime(t)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <span className="text-muted-foreground text-xs">to</span>
-                  <Select value={s.to} onValueChange={(v) => updateDay(day.key, { to: v })}>
-                    <SelectTrigger className="h-8 w-[100px] text-xs">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-48">
-                      {TIMES.map((t) => (
-                        <SelectItem key={t} value={t} className="text-xs">
-                          {formatTime(t)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <div className="flex items-center gap-1 flex-1 min-w-0">
+                  <input
+                    type="time"
+                    value={s.from}
+                    onChange={(e) => updateDay(day.key, { from: e.target.value })}
+                    className="h-8 w-full max-w-[110px] rounded-md border border-input bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                  <span className="text-muted-foreground text-xs shrink-0">–</span>
+                  <input
+                    type="time"
+                    value={s.to}
+                    onChange={(e) => updateDay(day.key, { to: e.target.value })}
+                    className="h-8 w-full max-w-[110px] rounded-md border border-input bg-background px-2 text-xs focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
                 </div>
               ) : (
-                <span className="text-xs text-muted-foreground">Closed</span>
+                <span className="text-xs text-muted-foreground italic">Closed</span>
               )}
             </div>
           );

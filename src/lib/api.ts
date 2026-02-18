@@ -234,6 +234,22 @@ export interface PharmacyProfile {
   opening_hours: string | null;
   verified: boolean;
   created_at: string;
+  updated_at: string | null;
+  latitude: string | null;
+  longitude: string | null;
+  rating: string | null;
+  total_reviews: number;
+  total_searches: number;
+  total_inquiries: number;
+  accepts_medical_aid: boolean;
+  has_delivery: boolean;
+  is_24_hours: boolean;
+  parking_available: boolean;
+  special_services: string | null;
+  website: string | null;
+  facebook: string | null;
+  instagram: string | null;
+  chain_name: string | null;
 }
 
 export const profileApi = {

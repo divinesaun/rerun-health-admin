@@ -208,17 +208,20 @@ export function PharmacyActionsDropdown({ pharmacy }: Props) {
                 <Input {...register("city")} />
               </Field>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Phone" error={errors.phone?.message}>
-                <Input {...register("phone")} />
-              </Field>
-              <Field label="WhatsApp" error={errors.whatsapp_number?.message}>
-                <WhatsAppInput
-                  value={watch("whatsapp_number") ?? ""}
-                  onChange={(v) => setValue("whatsapp_number", v)}
-                />
-              </Field>
-            </div>
+            <Field label="Phone" error={errors.phone?.message}>
+              <WhatsAppInput
+                value={watch("phone") ?? ""}
+                onChange={(v) => setValue("phone", v)}
+                placeholder="77 123 4567"
+              />
+            </Field>
+            <Field label="WhatsApp" error={errors.whatsapp_number?.message}>
+              <WhatsAppInput
+                value={watch("whatsapp_number") ?? ""}
+                onChange={(v) => setValue("whatsapp_number", v)}
+                placeholder="77 123 4567"
+              />
+            </Field>
             <Field label="Email" error={errors.email?.message}>
               <Input {...register("email")} />
             </Field>

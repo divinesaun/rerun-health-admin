@@ -99,7 +99,21 @@ const BulkUpload = () => {
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleDownloadTemplate = () => {
-    const csv = "medicine_name,price,in_stock,quantity_available\nParacetamol 500mg,1.50,true,In Stock\nAmoxicillin 250mg,5.00,false,0";
+    const csv = [
+      "medicine_name,price,in_stock,quantity_available",
+      "Paracetamol 500mg,2.99,true,150",
+      "Ibuprofen 400mg,4.49,true,200",
+      "Amoxicillin 250mg,8.99,true,75",
+      "Omeprazole 20mg,6.50,false,",
+      "Metformin 500mg,3.25,true,300",
+      "Atorvastatin 10mg,12.99,true,90",
+      "Cetirizine 10mg,5.75,true,120",
+      "Lisinopril 5mg,7.20,false,",
+      "Azithromycin 500mg,15.49,true,45",
+      "Salbutamol Inhaler,18.99,true,60",
+      "Diclofenac 50mg,4.99,false,",
+      "Vitamin D3 1000IU,9.99,true,500",
+    ].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -174,8 +188,19 @@ const BulkUpload = () => {
     setProgress(0);
   };
 
-  const previewRows = parsed?.rows.slice(0, 5) ?? [];
-  const hasMore = (parsed?.rows.length ?? 0) > 5;
+  const handleCellEdit = (rowIdx: number, colIdx: number, value: string) => {
+    if (!parsed) return;
+    const newRows = parsed.rows.map((r) => [...r]);
+    newRows[rowIdx][colIdx] = value;
+    const newRaw = [parsed.headers.join(","), ...newRows.map((r) => r.join(","))].join("\n");
+    const updated: ParsedCsv = { headers: parsed.headers, rows: newRows, rawText: newRaw };
+    const v = validateCsv(updated);
+    setParsed(updated);
+    setValidation(v);
+  };
+
+  const previewRows = parsed?.rows.slice(0, 10) ?? [];
+  const hasMore = (parsed?.rows.length ?? 0) > 10;
 
   return (
     <Card>
@@ -254,8 +279,12 @@ const BulkUpload = () => {
                   {previewRows.map((row, ri) => (
                     <tr key={ri} className="border-b last:border-b-0">
                       {row.map((cell, ci) => (
-                        <td key={ci} className="px-3 py-1.5 text-muted-foreground truncate max-w-[160px]">
-                          {cell}
+                        <td key={ci} className="px-1 py-0.5">
+                          <input
+                            className="w-full min-w-[80px] bg-transparent text-xs text-foreground px-2 py-1 rounded border border-transparent hover:border-border focus:border-ring focus:outline-none transition-colors"
+                            value={cell}
+                            onChange={(e) => handleCellEdit(ri, ci, e.target.value)}
+                          />
                         </td>
                       ))}
                     </tr>
@@ -264,7 +293,7 @@ const BulkUpload = () => {
               </table>
               {hasMore && (
                 <p className="text-xs text-muted-foreground text-center py-1.5 border-t bg-muted/20">
-                  … and {parsed.rows.length - 5} more row{parsed.rows.length - 5 !== 1 ? "s" : ""}
+                  … and {parsed.rows.length - 10} more row{parsed.rows.length - 10 !== 1 ? "s" : ""}
                 </p>
               )}
             </div>

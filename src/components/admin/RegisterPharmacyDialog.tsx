@@ -147,17 +147,20 @@ export function RegisterPharmacyDialog() {
               <Input {...register("suburb")} placeholder="Avondale" />
             </FieldRow>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <FieldRow label="Phone" error={errors.phone?.message}>
-                <Input {...register("phone")} placeholder="+263 4 123 4567" />
-              </FieldRow>
-              <FieldRow label="WhatsApp" error={errors.whatsapp_number?.message}>
-                <WhatsAppInput
-                  value={watch("whatsapp_number") ?? ""}
-                  onChange={(v) => setValue("whatsapp_number", v)}
-                />
-              </FieldRow>
-            </div>
+            <FieldRow label="Phone" error={errors.phone?.message}>
+              <WhatsAppInput
+                value={watch("phone") ?? ""}
+                onChange={(v) => setValue("phone", v)}
+                placeholder="77 123 4567"
+              />
+            </FieldRow>
+            <FieldRow label="WhatsApp" error={errors.whatsapp_number?.message}>
+              <WhatsAppInput
+                value={watch("whatsapp_number") ?? ""}
+                onChange={(v) => setValue("whatsapp_number", v)}
+                placeholder="77 123 4567"
+              />
+            </FieldRow>
 
             <FieldRow label="Opening Hours" error={errors.opening_hours?.message}>
               <OpeningHoursPicker
