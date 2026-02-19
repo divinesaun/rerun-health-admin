@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -68,6 +68,7 @@ const Index = () => {
   const [tab, setTab] = useState<TabType>("dashboard");
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const mainRef = useRef<HTMLElement>(null);
   const { logout: authLogout, user, setToken } = useAuth();
 
   // ── Fetch data on mount ──────────────────────────────────────────────
@@ -189,6 +190,11 @@ const Index = () => {
 
   const [inventorySubTab, setInventorySubTab] = useState<string>("overview");
 
+  // Scroll to top when tab changes
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 });
+  }, [tab]);
+
   const initials = user?.name
     ? user.name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2)
     : "PH";
@@ -234,7 +240,7 @@ const Index = () => {
         </header>
 
         {/* Main content — scrollable */}
-        <main className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
+        <main ref={mainRef} className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
           {/* Loading state */}
           {loading && (
             <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
@@ -474,8 +480,8 @@ function DashboardHome({
           <Button variant="outline" className="justify-start gap-2" onClick={() => onNavigate("inventory")}>
             <Plus className="h-4 w-4" /> Add Medicine
           </Button>
-          <Button variant="outline" className="justify-start gap-2" onClick={() => onNavigate("inventory")}>
-            <Upload className="h-4 w-4" /> Bulk Upload CSV
+          <Button variant="outline" className="justify-start gap-2" onClick={() => onNavigate("account")}>
+            <KeyRound className="h-4 w-4" /> Change Password
           </Button>
           <Button variant="outline" className="justify-start gap-2" onClick={() => onNavigate("profile")}>
             <Star className="h-4 w-4" /> Update Profile
@@ -730,10 +736,32 @@ function ProfilePanel({
             <CardTitle className="text-base flex items-center gap-2"><MapPin className="h-4 w-4" /> Map Coordinates</CardTitle>
             <CardDescription>Used to show your pharmacy on the map and calculate distance</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div><Label>Latitude</Label><Input className="mt-1.5" value={latitude} onChange={(e) => setLatitude(e.target.value)} placeholder="-17.8252" /></div>
               <div><Label>Longitude</Label><Input className="mt-1.5" value={longitude} onChange={(e) => setLongitude(e.target.value)} placeholder="31.0522" /></div>
+            </div>
+            {latitude && longitude ? (
+              <div className="rounded-md overflow-hidden border">
+                <iframe
+                  title="Pharmacy Location"
+                  width="100%"
+                  height="200"
+                  style={{ border: 0 }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  src={`https://maps.google.com/maps?q=${latitude},${longitude}&z=15&output=embed`}
+                />
+              </div>
+            ) : null}
+            <div className="rounded-md bg-muted p-3 space-y-1.5">
+              <p className="text-xs font-medium text-foreground">How to get your coordinates:</p>
+              <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+                <li>Open <a href="https://maps.google.com" target="_blank" rel="noopener noreferrer" className="text-primary underline underline-offset-2">Google Maps</a> on your phone or computer</li>
+                <li>Search for your pharmacy or drop a pin on its location</li>
+                <li>Tap/click the pin — the coordinates appear in the URL or info panel (e.g. *-17.8252, 31.0522*)</li>
+                <li>Copy the first number as <strong>Latitude</strong> and the second as <strong>Longitude</strong></li>
+              </ol>
             </div>
           </CardContent>
         </Card>

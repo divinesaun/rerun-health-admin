@@ -222,8 +222,7 @@ const BulkUpload = () => {
     setValidation(v);
   };
 
-  const previewRows = parsed?.rows.slice(0, 10) ?? [];
-  const hasMore = (parsed?.rows.length ?? 0) > 10;
+  const previewRows = parsed?.rows ?? [];
 
   return (
     <Card>
@@ -290,9 +289,10 @@ const BulkUpload = () => {
                   </button>
                 </div>
               </div>
+              <div className="max-h-80 overflow-y-auto">
               <table className="w-full text-xs">
                 <thead>
-                  <tr className="border-b bg-muted/30">
+                  <tr className="border-b bg-muted/30 sticky top-0 z-10">
                     {parsed.headers.map((h, i) => {
                       const isExpected = ALL_COLS.includes(h.toLowerCase().replace(/\s+/g, "_"));
                       return (
@@ -329,11 +329,7 @@ const BulkUpload = () => {
                   ))}
                 </tbody>
               </table>
-              {hasMore && (
-                <p className="text-xs text-muted-foreground text-center py-1.5 border-t bg-muted/20">
-                  … and {parsed.rows.length - 10} more row{parsed.rows.length - 10 !== 1 ? "s" : ""}
-                </p>
-              )}
+              </div>
             </div>
 
             {/* Action buttons */}

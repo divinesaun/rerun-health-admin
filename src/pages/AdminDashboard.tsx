@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
@@ -86,6 +86,11 @@ const AdminDashboard = () => {
   const [tab, setTab] = useState<AdminTabType>("overview");
   const navigate = useNavigate();
   const { logout: authLogout, user } = useAuth();
+  const mainRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    mainRef.current?.scrollTo({ top: 0 });
+  }, [tab]);
 
   const handleLogout = () => {
     authLogout();
@@ -124,7 +129,7 @@ const AdminDashboard = () => {
           </div>
         </header>
 
-        <main className="flex-1 px-4 py-4 md:px-6 md:py-6">
+        <main ref={mainRef} className="flex-1 overflow-y-auto px-4 py-4 md:px-6 md:py-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               {tab === "overview" && "Dashboard Overview"}
