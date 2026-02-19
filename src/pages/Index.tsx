@@ -574,7 +574,12 @@ function ProfilePanel({
   const [phone, setPhone] = useState(pharmacy?.phone ?? "");
   const [pharmacyEmail, setPharmacyEmail] = useState(pharmacy?.email ?? "");
   const [whatsapp, setWhatsapp] = useState(pharmacy?.whatsapp_number ?? "");
-  const [hours, setHours] = useState(pharmacy?.opening_hours ?? "");
+  const [hours, setHours] = useState(() => {
+    const oh = pharmacy?.opening_hours;
+    if (!oh) return "";
+    if (typeof oh === "object") return JSON.stringify(oh);
+    return String(oh);
+  });
   const [chainName, setChainName] = useState(pharmacy?.chain_name ?? "");
   const [latitude, setLatitude] = useState(pharmacy?.latitude ?? "");
   const [longitude, setLongitude] = useState(pharmacy?.longitude ?? "");
@@ -597,7 +602,7 @@ function ProfilePanel({
       setPhone(pharmacy.phone ?? "");
       setPharmacyEmail(pharmacy.email ?? "");
       setWhatsapp(pharmacy.whatsapp_number ?? "");
-      setHours(pharmacy.opening_hours ?? "");
+      setHours(pharmacy.opening_hours ? (typeof pharmacy.opening_hours === "object" ? JSON.stringify(pharmacy.opening_hours) : String(pharmacy.opening_hours)) : "");
       setChainName(pharmacy.chain_name ?? "");
       setLatitude(pharmacy.latitude ?? "");
       setLongitude(pharmacy.longitude ?? "");

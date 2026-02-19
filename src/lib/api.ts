@@ -231,7 +231,7 @@ export interface PharmacyProfile {
   phone: string | null;
   email: string | null;
   whatsapp_number: string | null;
-  opening_hours: string | null;
+  opening_hours: string | Record<string, unknown> | null;
   verified: boolean;
   created_at: string;
   updated_at: string | null;
