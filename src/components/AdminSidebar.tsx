@@ -9,7 +9,6 @@ import {
   LogOut,
   ChevronLeft,
   Menu,
-  ShieldCheck,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -134,7 +133,7 @@ export function AdminDesktopSidebar({ activeTab, onTabChange, onLogout, adminNam
       <div className={cn("flex h-16 items-center border-b px-4", collapsed ? "justify-center" : "justify-between")}>
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" />
+            <img src="/favicon.ico" alt="RERUN Health" className="h-5 w-5" />
             <div>
               <p className="text-sm font-bold leading-tight text-foreground">RERUN Admin</p>
               <p className="text-[10px] text-muted-foreground">System Management</p>
@@ -181,7 +180,7 @@ export function AdminMobileSidebar({ activeTab, onTabChange, onLogout, adminName
       <SheetContent side="left" className="w-72 p-0 flex flex-col">
         <div className="flex h-16 items-center border-b px-4">
           <div className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" />
+            <img src="/favicon.ico" alt="RERUN Health" className="h-5 w-5" />
             <div>
               <p className="text-sm font-bold leading-tight text-foreground">RERUN Admin</p>
               <p className="text-[10px] text-muted-foreground">System Management</p>

@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { TabType } from "@/types/pharmacy";
 
 interface AppSidebarProps {
@@ -106,7 +107,11 @@ function SidebarNav({
           <>
             <Separator className="my-2" />
             <div className="flex items-center gap-3 px-3 py-2">
-              <img src="/favicon.ico" alt="Logo" className="h-8 w-8 shrink-0 rounded-full" />
+              <Avatar className="h-8 w-8 shrink-0">
+                <AvatarFallback className="bg-primary text-primary-foreground text-sm font-medium">
+                  {pharmacyName ? pharmacyName.slice(0, 2).toUpperCase() : "PH"}
+                </AvatarFallback>
+              </Avatar>
               <div className="overflow-hidden">
                 <p className="truncate text-sm font-medium text-foreground">{pharmacyName}</p>
                 <p className="truncate text-xs text-muted-foreground">{userEmail}</p>
