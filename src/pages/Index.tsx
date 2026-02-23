@@ -105,22 +105,17 @@ const Index = () => {
   // ── Handlers ─────────────────────────────────────────────────────────
   const handleAdd = useCallback(async (data: Omit<Medicine, "id" | "searches" | "updatedAt">, medicineId?: string) => {
     try {
-      let medId = medicineId;
-      if (!medId) {
-        const searchRes = await inventoryApi.searchMedicines(data.name);
-        const match = searchRes.medicines?.[0];
-        if (!match) {
-          toast({ title: "Not found", description: `${data.name} was not found in the master database.`, variant: "destructive" });
-          return;
-        }
-        medId = match.id;
-      }
-      const res = await inventoryApi.add({
-        medicine_id: medId,
+      const payload: import("@/lib/api").InventoryCreatePayload = {
         price: data.price,
         in_stock: data.inStock,
         quantity_available: data.quantity,
-      });
+      };
+      if (medicineId) {
+        payload.medicine_id = medicineId;
+      } else {
+        payload.medicine_name = data.name;
+      }
+      const res = await inventoryApi.add(payload);
       const newMed: Medicine = {
         id: res.item.id,
         name: data.name,

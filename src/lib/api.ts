@@ -141,7 +141,9 @@ export interface InventoryItem {
 }
 
 export interface InventoryCreatePayload {
-  medicine_id: string;
+  medicine_id?: string;
+  medicine_name?: string;
+  category?: string;
   price: number;
   in_stock: boolean;
   quantity_available?: string;

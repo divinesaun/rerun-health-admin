@@ -11,7 +11,7 @@ import { QUANTITY_OPTIONS } from "@/data/mockData";
 import { inventoryApi, type MedicineRecord } from "@/lib/api";
 
 interface QuickAddFormProps {
-  onAdd: (medicine: Omit<Medicine, "id" | "searches" | "updatedAt">, medicineId: string) => void;
+  onAdd: (medicine: Omit<Medicine, "id" | "searches" | "updatedAt">, medicineId?: string) => void;
 }
 
 const QuickAddForm = ({ onAdd }: QuickAddFormProps) => {
@@ -57,25 +57,21 @@ const QuickAddForm = ({ onAdd }: QuickAddFormProps) => {
   const handleSubmit = () => {
     const newErrors: Record<string, boolean> = {};
     if (!name.trim()) newErrors.name = true;
-    if (!selectedMedicine) newErrors.name = true;
     if (!price || parseFloat(price) <= 0) newErrors.price = true;
     if (Object.keys(newErrors).length) {
       setErrors(newErrors);
-      if (!selectedMedicine && name.trim()) {
-        // Show helpful message
-      }
       return;
     }
     setErrors({});
     onAdd(
       {
-        name: selectedMedicine!.name,
-        genericName: selectedMedicine!.generic_name ?? undefined,
+        name: selectedMedicine?.name ?? name.trim(),
+        genericName: selectedMedicine?.generic_name ?? undefined,
         price: parseFloat(price),
         inStock,
         quantity,
       },
-      selectedMedicine!.id
+      selectedMedicine?.id
     );
     setSuccess(true);
     setName("");
@@ -94,7 +90,7 @@ const QuickAddForm = ({ onAdd }: QuickAddFormProps) => {
           <CardTitle className="text-base font-semibold">Quick Add Medicine</CardTitle>
           <Zap className="h-4 w-4 text-muted-foreground" />
         </div>
-        <CardDescription>Add a single medicine to your inventory</CardDescription>
+        <CardDescription>Add a medicine to your inventory — type any name</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {success && (
@@ -110,7 +106,7 @@ const QuickAddForm = ({ onAdd }: QuickAddFormProps) => {
             <Input
               id="med-name"
               ref={inputRef}
-              placeholder="e.g., Paracetamol 500mg"
+              placeholder="e.g., Paracetamol 500mg, Panado, Brufen"
               value={name}
               onChange={(e) => {
                 setName(e.target.value);
@@ -144,11 +140,8 @@ const QuickAddForm = ({ onAdd }: QuickAddFormProps) => {
           )}
           {showSuggestions && name.length >= 2 && !searching && suggestions.length === 0 && (
             <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-md p-3">
-              <p className="text-sm text-muted-foreground">No medicines found matching "{name}"</p>
+              <p className="text-sm text-muted-foreground">No existing match for "{name}" — it will be added as a new medicine</p>
             </div>
-          )}
-          {errors.name && !selectedMedicine && name.trim() && (
-            <p className="mt-1 text-xs text-destructive">Please select a medicine from the suggestions</p>
           )}
         </div>
 
@@ -196,12 +189,12 @@ const QuickAddForm = ({ onAdd }: QuickAddFormProps) => {
           </Select>
         </div>
 
-        <Button className="w-full" onClick={handleSubmit} disabled={!selectedMedicine}>
+        <Button className="w-full" onClick={handleSubmit}>
           Add to Inventory
         </Button>
 
         <p className="text-xs text-muted-foreground">
-          💡 Start typing to search the medicine database
+          💡 Type any medicine name — brand or generic. Suggestions appear if we have a match.
         </p>
       </CardContent>
     </Card>
