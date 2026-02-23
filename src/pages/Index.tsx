@@ -632,8 +632,9 @@ function ProfilePanel({
       });
       setPharmacy(res.pharmacy);
       toast({ title: "Profile updated", description: "Your pharmacy details have been saved." });
-    } catch {
-      toast({ title: "Error", description: "Failed to save profile.", variant: "destructive" });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to save profile.";
+      toast({ title: "Error", description: msg, variant: "destructive" });
     } finally {
       setSavingProfile(false);
     }

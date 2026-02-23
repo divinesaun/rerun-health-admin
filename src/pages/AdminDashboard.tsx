@@ -56,6 +56,10 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from "recharts";
+import {
   Table,
   TableBody,
   TableCell,
@@ -885,6 +889,9 @@ function MedicinesTab() {
 
 // ── Analytics Tab ─────────────────────────────────────────────────────────
 
+const ADMIN_COLORS = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe", "#ede9fe", "#f5f3ff", "#e0e7ff", "#818cf8", "#4f46e5"];
+const PLATFORM_COLORS = ["#6366f1", "#22c55e", "#f59e0b", "#ef4444"];
+
 function AdminAnalyticsTab() {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["admin", "analytics"],
@@ -894,55 +901,131 @@ function AdminAnalyticsTab() {
   const overview = data?.overview;
   const trending = data?.trending_medicines ?? [];
 
+  // Bar chart data from trending medicines
+  const barData = trending.slice(0, 10).map((t) => ({
+    name: t.medicine_name.length > 14 ? t.medicine_name.slice(0, 14) + "…" : t.medicine_name,
+    searches: t.search_count,
+    fullName: t.medicine_name,
+  }));
+
+  // Pie chart: platform overview
+  const platformPieData = overview ? [
+    { name: "Pharmacies", value: Number(overview.total_pharmacies) || 0 },
+    { name: "Users", value: Number(overview.total_users) || 0 },
+    { name: "Medicines", value: Number(overview.total_medicines) || 0 },
+  ] : [];
+
+  const metricCards = [
+    { label: "Active Pharmacies", value: overview?.active_pharmacies ?? "—", sub: "updated inventory recently", icon: Building2 },
+    { label: "Total Searches", value: overview?.total_searches ?? "—", sub: "all-time medicine searches", icon: SearchIcon },
+    { label: "Total Medicines", value: overview?.total_medicines ?? "—", sub: "in the database", icon: Pill },
+    { label: "New Registrations", value: overview?.recent_signups ?? "—", sub: "recent pharmacy registrations", icon: Users },
+  ];
+
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Metric cards */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {metricCards.map((m) => (
+          <Card key={m.label}>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">{m.label}</CardTitle>
+              <m.icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-foreground">
+                {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : String(m.value)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">{m.sub}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Bar Chart: Trending Medicines */}
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Active Pharmacies</CardTitle>
+          <CardHeader>
+            <CardTitle className="text-base">Trending Medicines</CardTitle>
+            <CardDescription>Most searched medicines across all pharmacies</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (overview?.active_pharmacies ?? "—")}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">updated inventory recently</p>
+            {isLoading ? (
+              <LoadingState message="Loading trends..." />
+            ) : error ? (
+              <ErrorState message="Failed to load analytics" onRetry={() => refetch()} />
+            ) : barData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={320}>
+                <BarChart data={barData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} angle={-20} textAnchor="end" height={60} />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                    formatter={(value: number, _name: string, props: { payload?: { fullName?: string } }) => [value, props?.payload?.fullName ?? "Searches"]}
+                  />
+                  <Bar dataKey="searches" radius={[4, 4, 0, 0]}>
+                    {barData.map((_entry, i) => (
+                      <Cell key={i} fill={ADMIN_COLORS[i % ADMIN_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <TrendingUp className="h-8 w-8 mb-2 opacity-40" />
+                <p className="text-sm">No trending data yet</p>
+              </div>
+            )}
           </CardContent>
         </Card>
+
+        {/* Pie Chart: Platform Overview */}
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Searches</CardTitle>
+          <CardHeader>
+            <CardTitle className="text-base">Platform Overview</CardTitle>
+            <CardDescription>Distribution of entities across the platform</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (overview?.total_searches ?? "—")}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">all-time medicine searches</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">New Registrations</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-foreground">
-              {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : (overview?.recent_signups ?? "—")}
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">recent pharmacy registrations</p>
+            {isLoading ? (
+              <LoadingState message="Loading overview..." />
+            ) : platformPieData.every((d) => d.value === 0) ? (
+              <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                <Activity className="h-8 w-8 mb-2 opacity-40" />
+                <p className="text-sm">No platform data yet</p>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={320}>
+                <PieChart>
+                  <Pie
+                    data={platformPieData}
+                    cx="50%" cy="50%"
+                    innerRadius={65} outerRadius={110}
+                    paddingAngle={4}
+                    dataKey="value"
+                    label={({ name, value }) => `${name}: ${value}`}
+                  >
+                    {platformPieData.map((_entry, i) => (
+                      <Cell key={i} fill={PLATFORM_COLORS[i % PLATFORM_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Trending Medicines</CardTitle>
-          <CardDescription>Most searched medicines across all pharmacies</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <LoadingState message="Loading trends..." />
-          ) : error ? (
-            <ErrorState message="Failed to load analytics" onRetry={() => refetch()} />
-          ) : trending.length > 0 ? (
+      {/* Trending table (detailed) */}
+      {trending.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Trending Medicines — Detailed</CardTitle>
+            <CardDescription>Full list with search counts</CardDescription>
+          </CardHeader>
+          <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -961,14 +1044,9 @@ function AdminAnalyticsTab() {
                 ))}
               </TableBody>
             </Table>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <TrendingUp className="h-8 w-8 mb-2 opacity-40" />
-              <p className="text-sm">No trending data yet</p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

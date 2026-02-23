@@ -1,9 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { TrendingUp, Users, Package, Search, Loader2 } from "lucide-react";
+import { TrendingUp, Users, Package, Search, Loader2, DollarSign } from "lucide-react";
 import { Medicine } from "@/types/pharmacy";
 import { analyticsApi } from "@/lib/api";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+  AreaChart, Area,
+} from "recharts";
+
+const COLORS = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#ddd6fe", "#ede9fe", "#f5f3ff", "#e0e7ff"];
+const STOCK_COLORS = ["#22c55e", "#ef4444"];
 
 interface AnalyticsTabProps {
   medicines: Medicine[];
@@ -34,12 +42,46 @@ const AnalyticsTab = ({ medicines }: AnalyticsTabProps) => {
 
   const totalSearches = medicines.reduce((s, m) => s + m.searches, 0);
   const inStockCount = medicines.filter((m) => m.inStock).length;
-  const topMedicines = [...medicines].sort((a, b) => b.searches - a.searches).slice(0, 8);
+  const outOfStockCount = medicines.length - inStockCount;
+  const topMedicines = useMemo(
+    () => [...medicines].sort((a, b) => b.searches - a.searches).slice(0, 8),
+    [medicines]
+  );
+  const avgPrice = medicines.length > 0
+    ? (medicines.reduce((s, m) => s + m.price, 0) / medicines.length).toFixed(2)
+    : "0.00";
+
+  // Bar chart data for top searched
+  const barData = useMemo(
+    () => topMedicines.map((m) => ({ name: m.name.length > 12 ? m.name.slice(0, 12) + "…" : m.name, searches: m.searches, fullName: m.name })),
+    [topMedicines]
+  );
+
+  // Pie chart data for stock status
+  const stockPieData = useMemo(
+    () => [
+      { name: "In Stock", value: inStockCount },
+      { name: "Out of Stock", value: outOfStockCount },
+    ],
+    [inStockCount, outOfStockCount]
+  );
+
+  // Price distribution for area chart
+  const priceDistribution = useMemo(() => {
+    const sorted = [...medicines].sort((a, b) => a.price - b.price);
+    const buckets: { range: string; count: number }[] = [];
+    const ranges = [[0, 2], [2, 5], [5, 10], [10, 20], [20, 50], [50, Infinity]];
+    for (const [lo, hi] of ranges) {
+      const label = hi === Infinity ? `$${lo}+` : `$${lo}-${hi}`;
+      buckets.push({ range: label, count: sorted.filter((m) => m.price >= lo && m.price < hi).length });
+    }
+    return buckets;
+  }, [medicines]);
 
   const metricCards = [
     { label: "Total Medicines", value: String(medicines.length), sub: `${inStockCount} in stock`, icon: Package },
     { label: "Total Searches", value: String(totalSearches), sub: "across your inventory", icon: Search },
-    { label: "Top Searched", value: topMedicines[0]?.name ?? "—", sub: topMedicines[0] ? `${topMedicines[0].searches} searches` : "no data", icon: TrendingUp },
+    { label: "Avg. Price", value: `$${avgPrice}`, sub: "across all medicines", icon: DollarSign },
     { label: "Inquiries", value: String(inquiries.length), sub: "customer contacts", icon: Users },
   ];
 
@@ -71,33 +113,89 @@ const AnalyticsTab = ({ medicines }: AnalyticsTabProps) => {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Most searched medicines */}
+        {/* Bar Chart: Top Searched Medicines */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base font-semibold">Most Searched</CardTitle>
-            <CardDescription>Your top medicines by customer search volume</CardDescription>
+            <CardTitle className="text-base font-semibold">Top Searched Medicines</CardTitle>
+            <CardDescription>Customer search volume by medicine</CardDescription>
           </CardHeader>
           <CardContent>
             {topMedicines.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">No search data yet.</p>
             ) : (
-              <div className="space-y-3">
-                {topMedicines.map((m, i) => (
-                  <div key={m.id} className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-semibold text-foreground">
-                      {i + 1}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-foreground truncate">{m.name}</p>
-                    </div>
-                    <Badge variant={m.inStock ? "default" : "destructive"} className="text-[10px] shrink-0">
-                      {m.inStock ? "In Stock" : "Out"}
-                    </Badge>
-                    <span className="text-xs text-muted-foreground tabular-nums w-16 text-right">{m.searches} hits</span>
-                    <span className="text-sm font-medium text-foreground w-16 text-right">${m.price.toFixed(2)}</span>
-                  </div>
-                ))}
-              </div>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={barData} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} className="text-muted-foreground" />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} className="text-muted-foreground" />
+                  <Tooltip
+                    contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }}
+                    formatter={(value: number, _name: string, props: { payload?: { fullName?: string } }) => [value, props?.payload?.fullName ?? "Searches"]}
+                  />
+                  <Bar dataKey="searches" radius={[4, 4, 0, 0]}>
+                    {barData.map((_entry, i) => (
+                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Pie Chart: Stock Status */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Stock Status</CardTitle>
+            <CardDescription>In stock vs out of stock breakdown</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {medicines.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">No inventory data.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie
+                    data={stockPieData}
+                    cx="50%" cy="50%"
+                    innerRadius={60} outerRadius={100}
+                    paddingAngle={4}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {stockPieData.map((_entry, i) => (
+                      <Cell key={i} fill={STOCK_COLORS[i]} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Area Chart: Price Distribution */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base font-semibold">Price Distribution</CardTitle>
+            <CardDescription>Number of medicines by price range</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {medicines.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">No pricing data.</p>
+            ) : (
+              <ResponsiveContainer width="100%" height={240}>
+                <AreaChart data={priceDistribution} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
+                  <XAxis dataKey="range" tick={{ fontSize: 11 }} />
+                  <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--background))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} />
+                  <Area type="monotone" dataKey="count" stroke="#6366f1" fill="#6366f1" fillOpacity={0.15} strokeWidth={2} />
+                </AreaChart>
+              </ResponsiveContainer>
             )}
           </CardContent>
         </Card>
@@ -112,7 +210,7 @@ const AnalyticsTab = ({ medicines }: AnalyticsTabProps) => {
             {inquiries.length === 0 ? (
               <p className="py-6 text-center text-sm text-muted-foreground">No inquiries yet. Customers will appear here when they contact your pharmacy.</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-[240px] overflow-y-auto">
                 {inquiries.slice(0, 8).map((inq, i) => (
                   <div key={inq.id ?? i} className="rounded-md border p-3">
                     <p className="text-sm text-foreground">{inq.message ?? "Customer inquiry"}</p>
